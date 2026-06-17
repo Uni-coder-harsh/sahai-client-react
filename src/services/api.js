@@ -1,25 +1,39 @@
 export const getBaseUrl = () => {
-  // Check if a custom URL is stored
+  let url = null;
+
+  // 1. Check custom URL override
   const customUrl = localStorage.getItem('custom_api_url');
-  if (customUrl) return customUrl.trim();
-
-  // Check Vite env variables
-  if (import.meta.env && import.meta.env.VITE_API_URL) {
-    let url = import.meta.env.VITE_API_URL.trim();
-    if (!url.endsWith('/api') && !url.endsWith('/api/')) {
-      url = url.endsWith('/') ? `${url}api` : `${url}/api`;
-    }
-    return url;
-  }
-
-  // Fallback to absolute relative pathing ONLY for non-localhost production environments
-  if (typeof window !== 'undefined') {
+  if (customUrl) {
+    url = customUrl.trim();
+  } 
+  // 2. Check Vite env variables
+  else if (import.meta.env && import.meta.env.VITE_API_URL) {
+    url = import.meta.env.VITE_API_URL.trim();
+  } 
+  // 3. Fallback to origin pathing for production
+  else if (typeof window !== 'undefined') {
     if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-      return `${window.location.origin}/api`;
+      url = `${window.location.origin}/api`;
     }
   }
 
-  return null;
+  if (!url) return null;
+
+  // Auto-resolve missing '/api' suffix if omitted
+  if (!url.endsWith('/api') && !url.endsWith('/api/')) {
+    url = url.endsWith('/') ? `${url}api` : `${url}/api`;
+  }
+
+  // Auto-resolve missing absolute protocol (fixes browser prepending origin hostname errors)
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    if (url.includes('localhost') || url.includes('127.0.0.1')) {
+      url = `http://${url}`;
+    } else {
+      url = `https://${url}`;
+    }
+  }
+
+  return url;
 };
 
 class ApiService {
