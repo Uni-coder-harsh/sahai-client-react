@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { api, getBaseUrl } from './services/api';
 import AuthScreen from './components/AuthScreen';
 import PersonalizeScreen from './components/PersonalizeScreen';
@@ -8,6 +9,9 @@ import SkillMeshScreen from './components/SkillMeshScreen';
 import SandboxScreen from './components/SandboxScreen';
 import FailureReportScreen from './components/FailureReportScreen';
 import ProfileScreen from './components/ProfileScreen';
+import GuestLandingScreen from './components/GuestLandingScreen';
+import QuestionBankScreen from './components/QuestionBankScreen';
+import DebugConsoleScreen from './components/DebugConsoleScreen';
 
 import { 
   LayoutDashboard, 
@@ -16,13 +20,16 @@ import {
   AlertOctagon, 
   User, 
   LogOut,
-  Sparkles
+  Sparkles,
+  BookOpen,
+  Terminal
 } from 'lucide-react';
 
 export default function App() {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const navigate = useNavigate();
+  const location = useLocation();
   
   // Progression States
   const [needsPersonalization, setNeedsPersonalization] = useState(false);
@@ -45,13 +52,20 @@ export default function App() {
     const savedUser = localStorage.getItem('auth_user');
 
     if (savedToken && savedUser) {
-      const parsedUser = JSON.parse(savedUser);
-      setUser(parsedUser);
-      setToken(savedToken);
-      api.setToken(savedToken);
-      
-      // Check progression requirements
-      checkProgression(parsedUser);
+      try {
+        const parsedUser = JSON.parse(savedUser);
+        setUser(parsedUser);
+        setToken(savedToken);
+        api.setToken(savedToken);
+        
+        // Check progression requirements
+        checkProgression(parsedUser);
+      } catch (e) {
+        console.error("Session restore error:", e);
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('auth_user');
+        setLoading(false);
+      }
     } else {
       setLoading(false);
     }
@@ -75,21 +89,32 @@ export default function App() {
     setToken(api.token);
     localStorage.setItem('auth_user', JSON.stringify(loggedUser));
     checkProgression(loggedUser);
+    
+    // Auto redirect based on gates
+    if (!loggedUser.academic_stream) {
+      navigate('/personalize');
+    } else {
+      const completed = localStorage.getItem(`initial_test_complete_${loggedUser.id}`);
+      if (!completed) {
+        navigate('/initial-test');
+      } else {
+        navigate('/dashboard');
+      }
+    }
   };
 
   const handlePersonalizeSuccess = (updatedUser) => {
     setUser(updatedUser);
     localStorage.setItem('auth_user', JSON.stringify(updatedUser));
     setNeedsPersonalization(false);
-    
-    // Once personalized, we need to take the initial test
     setNeedsInitialTest(true);
+    navigate('/initial-test');
   };
 
   const handleTestComplete = () => {
     localStorage.setItem(`initial_test_complete_${user.id}`, 'true');
     setNeedsInitialTest(false);
-    setActiveTab('dashboard');
+    navigate('/dashboard');
   };
 
   const handleLogout = () => {
@@ -100,7 +125,7 @@ export default function App() {
     setToken(null);
     setNeedsPersonalization(false);
     setNeedsInitialTest(false);
-    setActiveTab('dashboard');
+    navigate('/');
   };
 
   if (loading) {
@@ -114,7 +139,7 @@ export default function App() {
   // 0. Configuration Error Gate (Localhost Fallback Disabled)
   if (configError) {
     return (
-      <div className="auth-bg" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: '20px', background: 'var(--bg-dark)' }}>
+      <div className="auth-bg" style={{ display: 'flex', alignItems: 'center', justify: 'center', minHeight: '100vh', padding: '20px', background: 'var(--bg-dark)' }}>
         <div className="glass-card animate-fade-in" style={{ maxWidth: '500px', width: '100%' }}>
           <div className="glass-card-header" style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
             <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'rgba(239, 68, 68, 0.1)', color: 'var(--error)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -158,130 +183,185 @@ export default function App() {
     );
   }
 
-  // 1. Auth Gate
-  if (!user) {
-    return <AuthScreen onAuthSuccess={handleAuthSuccess} />;
-  }
+  // Determine active tab highlighted in sidebar
+  const activeTab = location.pathname.substring(1) || 'dashboard';
 
-  // 2. Personalization Gate
-  if (needsPersonalization) {
-    return <PersonalizeScreen user={user} onPersonalizeSuccess={handlePersonalizeSuccess} />;
-  }
-
-  // 3. Diagnostic Initial MCQ Test Gate
-  if (needsInitialTest) {
-    return <InitialTestScreen user={user} onTestComplete={handleTestComplete} />;
-  }
-
-  // 4. Main Application Workspace Layout
-  const renderActiveScreen = () => {
-    switch (activeTab) {
-      case 'dashboard':
-        return <DashboardScreen user={user} onTabChange={setActiveTab} />;
-      case 'skill_mesh':
-        return <SkillMeshScreen user={user} />;
-      case 'sandbox':
-        return <SandboxScreen user={user} />;
-      case 'failure_report':
-        return <FailureReportScreen user={user} />;
-      case 'profile':
-        return <ProfileScreen user={user} onLogout={handleLogout} />;
-      default:
-        return <DashboardScreen user={user} onTabChange={setActiveTab} />;
+  // Guest route wrapper: Redirect to dashboard if logged in
+  const renderGuestRoute = (element) => {
+    if (user) {
+      if (needsPersonalization) return <Navigate to="/personalize" replace />;
+      if (needsInitialTest) return <Navigate to="/initial-test" replace />;
+      return <Navigate to="/dashboard" replace />;
     }
+    return element;
+  };
+
+  // Private route wrapper: Redirect to login if not logged in, enforce personalization gates
+  const renderPrivateRoute = (element) => {
+    if (!user) {
+      return <Navigate to="/login" replace />;
+    }
+    
+    // Enforce Onboarding Gates
+    if (needsPersonalization) {
+      if (location.pathname !== '/personalize') {
+        return <Navigate to="/personalize" replace />;
+      }
+    } else if (needsInitialTest) {
+      if (location.pathname !== '/initial-test') {
+        return <Navigate to="/initial-test" replace />;
+      }
+    } else {
+      // Block accessing onboarding gates once completed
+      if (location.pathname === '/personalize' || location.pathname === '/initial-test') {
+        return <Navigate to="/dashboard" replace />;
+      }
+    }
+
+    return (
+      <div className="app-container">
+        {/* Sidebar Navigation */}
+        <aside className="sidebar">
+          {/* Brand details */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '0 8px 24px 8px', borderBottom: '1px solid var(--border-color)', marginBottom: '16px' }}>
+            <Sparkles size={24} style={{ color: 'var(--primary)' }} />
+            <span style={{ fontSize: '1.4rem', fontWeight: 800, background: 'linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', letterSpacing: '-0.02em' }}>
+              SahAI Core
+            </span>
+          </div>
+
+          {/* User preview */}
+          <div style={{ padding: '12px 14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-color)', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+            <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.9rem', color: '#fff' }}>
+              {user.name ? user.name[0].toUpperCase() : user.username[0].toUpperCase()}
+            </div>
+            <div style={{ overflow: 'hidden', flex: 1 }}>
+              <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                {user.name || user.username}
+              </div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                {user.academic_stream || 'Student'}
+              </div>
+            </div>
+          </div>
+
+          {/* Navigation list */}
+          <nav className="nav-menu">
+            <button
+              onClick={() => navigate('/dashboard')}
+              className={`nav-link ${activeTab === 'dashboard' ? 'active' : ''}`}
+              style={{ background: 'none', border: 'none', width: '100%', textTransform: 'none', fontFamily: 'inherit', textAlign: 'left' }}
+            >
+              <LayoutDashboard size={18} />
+              <span>Dashboard</span>
+            </button>
+            
+            <button
+              onClick={() => navigate('/qbank')}
+              className={`nav-link ${activeTab === 'qbank' ? 'active' : ''}`}
+              style={{ background: 'none', border: 'none', width: '100%', textTransform: 'none', fontFamily: 'inherit', textAlign: 'left' }}
+            >
+              <BookOpen size={18} />
+              <span>Question Bank</span>
+            </button>
+
+            <button
+              onClick={() => navigate('/mesh')}
+              className={`nav-link ${activeTab === 'mesh' ? 'active' : ''}`}
+              style={{ background: 'none', border: 'none', width: '100%', textTransform: 'none', fontFamily: 'inherit', textAlign: 'left' }}
+            >
+              <Network size={18} />
+              <span>Skill Mesh</span>
+            </button>
+
+            <button
+              onClick={() => navigate('/sandbox')}
+              className={`nav-link ${activeTab === 'sandbox' ? 'active' : ''}`}
+              style={{ background: 'none', border: 'none', width: '100%', textTransform: 'none', fontFamily: 'inherit', textAlign: 'left' }}
+            >
+              <Code size={18} />
+              <span>Code Sandbox</span>
+            </button>
+
+            <button
+              onClick={() => navigate('/failures')}
+              className={`nav-link ${activeTab === 'failures' ? 'active' : ''}`}
+              style={{ background: 'none', border: 'none', width: '100%', textTransform: 'none', fontFamily: 'inherit', textAlign: 'left' }}
+            >
+              <AlertOctagon size={18} />
+              <span>Failure Logs</span>
+            </button>
+
+            <button
+              onClick={() => navigate('/profile')}
+              className={`nav-link ${activeTab === 'profile' ? 'active' : ''}`}
+              style={{ background: 'none', border: 'none', width: '100%', textTransform: 'none', fontFamily: 'inherit', textAlign: 'left' }}
+            >
+              <User size={18} />
+              <span>My Profile</span>
+            </button>
+
+            <button
+              onClick={() => navigate('/logs')}
+              className={`nav-link ${activeTab === 'logs' ? 'active' : ''}`}
+              style={{ background: 'none', border: 'none', width: '100%', textTransform: 'none', fontFamily: 'inherit', textAlign: 'left' }}
+            >
+              <Terminal size={18} />
+              <span>Debug Console</span>
+            </button>
+          </nav>
+
+          {/* Quick logout button at bottom */}
+          <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '16px', marginTop: 'auto' }}>
+            <button
+              onClick={handleLogout}
+              style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', padding: '10px 14px', borderRadius: '8px', background: 'none', border: 'none', color: '#f87171', fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer', transition: 'all var(--transition-fast)' }}
+            >
+              <LogOut size={16} />
+              <span>Log Out</span>
+            </button>
+          </div>
+        </aside>
+
+        {/* Main Workspace Contents */}
+        <main className="main-content">
+          {element}
+        </main>
+      </div>
+    );
   };
 
   return (
-    <div className="app-container">
-      {/* Sidebar Navigation */}
-      <aside className="sidebar">
-        {/* Brand details */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '0 8px 24px 8px', borderBottom: '1px solid var(--border-color)', marginBottom: '16px' }}>
-          <Sparkles size={24} style={{ color: 'var(--primary)' }} />
-          <span style={{ fontSize: '1.4rem', fontWeight: 800, background: 'linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', letterSpacing: '-0.02em' }}>
-            SahAI Core
-          </span>
-        </div>
+    <Routes>
+      {/* Guest Routes */}
+      <Route path="/" element={renderGuestRoute(<GuestLandingScreen />)} />
+      <Route path="/login" element={renderGuestRoute(<AuthScreen onAuthSuccess={handleAuthSuccess} />)} />
+      <Route path="/signup" element={renderGuestRoute(<AuthScreen onAuthSuccess={handleAuthSuccess} />)} />
+      
+      {/* Onboarding gates */}
+      <Route path="/personalize" element={user && needsPersonalization ? (
+        <PersonalizeScreen user={user} onPersonalizeSuccess={handlePersonalizeSuccess} />
+      ) : (
+        <Navigate to="/dashboard" replace />
+      )} />
+      
+      <Route path="/initial-test" element={user && needsInitialTest ? (
+        <InitialTestScreen user={user} onTestComplete={handleTestComplete} />
+      ) : (
+        <Navigate to="/dashboard" replace />
+      )} />
 
-        {/* User preview */}
-        <div style={{ padding: '12px 14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-color)', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-          <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.9rem', color: '#fff' }}>
-            {user.name ? user.name[0].toUpperCase() : user.username[0].toUpperCase()}
-          </div>
-          <div style={{ overflow: 'hidden' }}>
-            <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-              {user.name || user.username}
-            </div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-              {user.academic_stream ? 'B.Tech CSE' : 'Student'}
-            </div>
-          </div>
-        </div>
+      {/* Private App Routes */}
+      <Route path="/dashboard" element={renderPrivateRoute(<DashboardScreen user={user} onTabChange={(tab) => navigate(`/${tab}`)} />)} />
+      <Route path="/qbank" element={renderPrivateRoute(<QuestionBankScreen user={user} />)} />
+      <Route path="/mesh" element={renderPrivateRoute(<SkillMeshScreen user={user} />)} />
+      <Route path="/sandbox" element={renderPrivateRoute(<SandboxScreen user={user} />)} />
+      <Route path="/failures" element={renderPrivateRoute(<FailureReportScreen user={user} />)} />
+      <Route path="/profile" element={renderPrivateRoute(<ProfileScreen user={user} onLogout={handleLogout} />)} />
+      <Route path="/logs" element={renderPrivateRoute(<DebugConsoleScreen />)} />
 
-        {/* Navigation list */}
-        <nav className="nav-menu">
-          <button
-            onClick={() => setActiveTab('dashboard')}
-            className={`nav-link ${activeTab === 'dashboard' ? 'active' : ''}`}
-            style={{ background: 'none', border: 'none', width: '100%', textTransform: 'none', fontFamily: 'inherit' }}
-          >
-            <LayoutDashboard size={18} />
-            <span>Dashboard</span>
-          </button>
-          
-          <button
-            onClick={() => setActiveTab('skill_mesh')}
-            className={`nav-link ${activeTab === 'skill_mesh' ? 'active' : ''}`}
-            style={{ background: 'none', border: 'none', width: '100%', textTransform: 'none', fontFamily: 'inherit' }}
-          >
-            <Network size={18} />
-            <span>Skill Mesh</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('sandbox')}
-            className={`nav-link ${activeTab === 'sandbox' ? 'active' : ''}`}
-            style={{ background: 'none', border: 'none', width: '100%', textTransform: 'none', fontFamily: 'inherit' }}
-          >
-            <Code size={18} />
-            <span>Code Sandbox</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('failure_report')}
-            className={`nav-link ${activeTab === 'failure_report' ? 'active' : ''}`}
-            style={{ background: 'none', border: 'none', width: '100%', textTransform: 'none', fontFamily: 'inherit' }}
-          >
-            <AlertOctagon size={18} />
-            <span>Failure Logs</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('profile')}
-            className={`nav-link ${activeTab === 'profile' ? 'active' : ''}`}
-            style={{ background: 'none', border: 'none', width: '100%', textTransform: 'none', fontFamily: 'inherit' }}
-          >
-            <User size={18} />
-            <span>My Profile</span>
-          </button>
-        </nav>
-
-        {/* Quick logout button at bottom */}
-        <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '16px', marginTop: 'auto' }}>
-          <button
-            onClick={handleLogout}
-            style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', padding: '10px 14px', borderRadius: '8px', background: 'none', border: 'none', color: '#f87171', fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer', transition: 'all var(--transition-fast)' }}
-          >
-            <LogOut size={16} />
-            <span>Log Out</span>
-          </button>
-        </div>
-      </aside>
-
-      {/* Main Workspace Contents */}
-      <main className="main-content">
-        {renderActiveScreen()}
-      </main>
-    </div>
+      {/* Wildcard Fallback */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 }

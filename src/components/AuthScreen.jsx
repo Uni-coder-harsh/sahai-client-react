@@ -15,6 +15,12 @@ export default function AuthScreen({ onAuthSuccess }) {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
 
+  // Institution details
+  const [institutionName, setInstitutionName] = useState('');
+  const [institutionTier, setInstitutionTier] = useState('Tier-3');
+  const [institutionRegion, setInstitutionRegion] = useState('');
+  const [institutionState, setInstitutionState] = useState('');
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -31,8 +37,8 @@ export default function AuthScreen({ onAuthSuccess }) {
         });
         onAuthSuccess(data.user);
       } else {
-        if (!username || !name || !email || !password || !confirmPassword) {
-          throw new Error('Please fill in all required fields.');
+        if (!username || !name || !email || !password || !confirmPassword || !institutionName || !institutionRegion || !institutionState) {
+          throw new Error('Please fill in all required fields, including college details.');
         }
         if (password !== confirmPassword) {
           throw new Error('Passwords do not match.');
@@ -43,7 +49,11 @@ export default function AuthScreen({ onAuthSuccess }) {
           email,
           password,
           confirmPassword,
-          phoneNumber
+          phoneNumber,
+          institutionName,
+          institutionTier,
+          institutionRegion,
+          institutionState
         });
         onAuthSuccess(data.user);
       }
@@ -99,15 +109,59 @@ export default function AuthScreen({ onAuthSuccess }) {
                     required
                   />
                 </div>
-                <div className="form-group">
-                  <label className="form-label">Phone Number</label>
-                  <input
-                    type="tel"
-                    className="form-input"
-                    value={phoneNumber}
-                    onChange={(e) => setPhoneNumber(e.target.value)}
-                    placeholder="+91 99999 99999"
-                  />
+                <div style={{ borderTop: '1px dashed var(--border-color)', margin: '20px 0', paddingTop: '16px' }}>
+                  <h4 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '12px', color: 'var(--primary)' }}>College Tenant Details</h4>
+                  
+                  <div className="form-group">
+                    <label className="form-label">College / Institution Name *</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={institutionName}
+                      onChange={(e) => setInstitutionName(e.target.value)}
+                      placeholder="e.g. Model Engineering College"
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Institution Resource Tier *</label>
+                    <select
+                      className="form-input"
+                      value={institutionTier}
+                      onChange={(e) => setInstitutionTier(e.target.value)}
+                      style={{ height: '44px', background: 'var(--bg-dark)', color: '#fff', cursor: 'pointer' }}
+                    >
+                      <option value="Tier-1">Tier-1 (High Resource)</option>
+                      <option value="Tier-2">Tier-2 (Medium Resource)</option>
+                      <option value="Tier-3">Tier-3 (Low Resource)</option>
+                    </select>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div className="form-group">
+                      <label className="form-label">Region *</label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        value={institutionRegion}
+                        onChange={(e) => setInstitutionRegion(e.target.value)}
+                        placeholder="e.g. South"
+                        required
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">State *</label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        value={institutionState}
+                        onChange={(e) => setInstitutionState(e.target.value)}
+                        placeholder="e.g. Kerala"
+                        required
+                      />
+                    </div>
+                  </div>
                 </div>
               </>
             )}

@@ -36,6 +36,34 @@ export const getBaseUrl = () => {
   return url;
 };
 
+export const debugLogs = [];
+let logListeners = [];
+export const addLogListener = (listener) => {
+  logListeners.push(listener);
+  return () => {
+    logListeners = logListeners.filter(l => l !== listener);
+  };
+};
+
+export const addDebugLog = (type, message, details = null) => {
+  const logEntry = {
+    id: Math.random().toString(36).substring(2, 9),
+    timestamp: new Date().toISOString(),
+    type, // 'API_REQUEST' | 'API_RESPONSE' | 'ML_CLASSIFIER' | 'BAYESIAN_UPDATE' | 'DAG_PROPAGATION' | 'SYSTEM'
+    message,
+    details
+  };
+  debugLogs.push(logEntry);
+  if (debugLogs.length > 200) debugLogs.shift();
+  logListeners.forEach(listener => {
+    try {
+      listener(logEntry, debugLogs);
+    } catch (e) {
+      console.error(e);
+    }
+  });
+};
+
 class ApiService {
   constructor() {
     this.token = localStorage.getItem('auth_token') || null;
@@ -63,31 +91,86 @@ class ApiService {
   async _request(endpoint, options = {}) {
     const baseUrl = getBaseUrl();
     if (!baseUrl) {
+      addDebugLog('SYSTEM', 'Failed API request: Gateway configuration missing');
       throw new Error("API Connection Configuration Required. Localhost fallback is disabled.");
     }
     
     const url = `${baseUrl}${endpoint}`;
-    const response = await fetch(url, {
-      ...options,
-      headers: {
-        ...this.headers,
-        ...options.headers,
-      },
-    });
+    let bodyObj = null;
+    if (options.body) {
+      try {
+        bodyObj = JSON.parse(options.body);
+      } catch (_) {
+        bodyObj = options.body;
+      }
+    }
+    
+    addDebugLog('API_REQUEST', `Initiating HTTP ${options.method || 'GET'} request to ${endpoint}`, { url, body: bodyObj });
 
-    const text = await response.text();
-    let data;
     try {
-      data = text ? JSON.parse(text) : {};
-    } catch (_) {
-      throw new Error(`Failed to parse API response. Raw response: ${text}`);
-    }
+      const response = await fetch(url, {
+        ...options,
+        headers: {
+          ...this.headers,
+          ...options.headers,
+        },
+      });
 
-    if (!response.ok) {
-      throw new Error(data.error || `Request failed with status ${response.statusCode || response.status}`);
-    }
+      const text = await response.text();
+      let data;
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch (_) {
+        addDebugLog('SYSTEM', `HTTP response parse error on ${endpoint}`, { rawResponse: text });
+        throw new Error(`Failed to parse API response. Raw response: ${text}`);
+      }
 
-    return data;
+      addDebugLog('API_RESPONSE', `HTTP ${response.status} response from ${endpoint}`, data);
+
+      if (!response.ok) {
+        throw new Error(data.error || `Request failed with status ${response.statusCode || response.status}`);
+      }
+
+      // Check if the response contains telemetry updates from the Python engine
+      if (data.telemetry_updates && Array.isArray(data.telemetry_updates)) {
+        data.telemetry_updates.forEach(update => {
+          if (update.behavior_class !== undefined) {
+            const behaviorLabels = {
+              0: 'Normal behavior classified by Random Forest model.',
+              1: 'Shotgun Debugging detected! Penalizing learning rate to 0.5.',
+              2: 'Copy-Paste dependency detected! Penalizing learning rate to 0.1.'
+            };
+            addDebugLog('ML_CLASSIFIER', `Random Forest behavior classification: Class ${update.behavior_class}`, {
+              label: behaviorLabels[update.behavior_class],
+              node_id: update.node_id,
+              user_id: update.user_id
+            });
+          }
+          if (update.expected_mastery !== undefined) {
+            addDebugLog('BAYESIAN_UPDATE', `Updated concept ${update.node_id}: Expected Mastery E[K] = ${update.expected_mastery.toFixed(4)}`, {
+              alpha: update.alpha,
+              beta: update.beta,
+              mastery: update.expected_mastery
+            });
+          }
+          if (update.misconceptions_updated && Array.isArray(update.misconceptions_updated)) {
+            update.misconceptions_updated.forEach(misc => {
+              addDebugLog('BAYESIAN_UPDATE', `Misconception triggered on concept ${misc.node_id}: Expected Mastery E[K] = ${misc.expected_mastery.toFixed(4)}`, misc);
+            });
+          }
+          if (update.propagations && Array.isArray(update.propagations)) {
+            update.propagations.forEach(prop => {
+              addDebugLog('DAG_PROPAGATION', `Propagated updates up DAG: ${prop.target_node} -> parent ${prop.source_node} (Mastery: ${prop.expected_mastery.toFixed(4)})`, prop);
+            });
+          }
+        });
+      }
+
+      return data;
+    } catch (err) {
+      addDebugLog('SYSTEM', `HTTP request failed for ${endpoint}: ${err.message}`, { error: err });
+      throw err;
+    }
   }
 
   async signup(payload) {
@@ -128,6 +211,17 @@ class ApiService {
     return this._request(`/users/${userId}`);
   }
 
+  async updateUserProfile(userId, payload) {
+    return this._request(`/users/${userId}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async fetchInstitutions() {
+    return this._request('/users/institutions/list');
+  }
+
   async fetchCurriculum(domain, userId = null) {
     const query = userId ? `?user_id=${userId}` : '';
     return this._request(`/curriculum/${domain}${query}`);
@@ -135,6 +229,14 @@ class ApiService {
 
   async fetchInitialQuestions() {
     return this._request('/questions/initial');
+  }
+
+  async fetchAllQuestions(userId) {
+    return this._request(`/questions/all?user_id=${userId}`);
+  }
+
+  async fetchQuestionDetails(questionId) {
+    return this._request(`/questions/${questionId}`);
   }
 
   async submitAnswer(payload) {

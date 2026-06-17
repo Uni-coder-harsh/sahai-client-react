@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
-import { BookOpen, TrendingUp, AlertTriangle, Play, HelpCircle, Check, X, ArrowRight } from 'lucide-react';
+import { BookOpen, TrendingUp, AlertTriangle, Play, HelpCircle, Check, X, ArrowRight, Target } from 'lucide-react';
 
 export default function DashboardScreen({ user, onTabChange }) {
   const [cognitiveState, setCognitiveState] = useState([]);
   const [practiceQuestions, setPracticeQuestions] = useState([]);
+  const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
@@ -20,12 +21,14 @@ export default function DashboardScreen({ user, onTabChange }) {
   const loadDashboardData = async (showRefreshIndicator = false) => {
     if (showRefreshIndicator) setRefreshing(true);
     try {
-      const [stateRes, practiceRes] = await Promise.all([
+      const [stateRes, practiceRes, profileRes] = await Promise.all([
         api.fetchCognitiveState(user.id),
-        api.fetchPracticeQuestions(user.id)
+        api.fetchPracticeQuestions(user.id),
+        api.fetchUserProfile(user.id)
       ]);
       setCognitiveState(stateRes);
       setPracticeQuestions(practiceRes);
+      setProfile(profileRes);
       setError('');
     } catch (err) {
       setError(err.message || 'Failed to load dashboard parameters.');
@@ -226,34 +229,78 @@ export default function DashboardScreen({ user, onTabChange }) {
           </div>
         </div>
 
-        {/* Focus Subtopics */}
-        <div className="glass-card">
-          <div className="glass-card-header" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <AlertTriangle size={20} style={{ color: 'var(--error)' }} />
-            <h3 style={{ fontSize: '1.2rem', fontWeight: 700 }}>Weakest Concept Areas</h3>
-          </div>
-          <div className="glass-card-body" style={{ marginTop: '16px' }}>
-            {weakNodes.length === 0 ? (
-              <p style={{ color: 'var(--text-secondary)' }}>No weak concepts. Keep learning!</p>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                {weakNodes.map((node) => (
-                  <div key={node.node_id} style={{ padding: '12px 16px', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border-color)', borderRadius: '10px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                      <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-primary)' }}>{node.concept_name}</span>
-                      <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--error)' }}>{(parseFloat(node.expected_mastery) * 100).toFixed(0)}%</span>
-                    </div>
-                    <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: '3px', overflow: 'hidden' }}>
-                      <div style={{ width: `${parseFloat(node.expected_mastery) * 100}%`, height: '100%', background: 'var(--error)', borderRadius: '3px' }} />
-                    </div>
+        {/* Focus Subtopics & Targets */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          
+          {/* Target & Syllabus Card */}
+          <div className="glass-card">
+            <div className="glass-card-header" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Target size={20} style={{ color: 'var(--primary)' }} />
+              <h3 style={{ fontSize: '1.2rem', fontWeight: 700 }}>Target & Syllabus Reference</h3>
+            </div>
+            <div className="glass-card-body" style={{ marginTop: '16px' }}>
+              {profile ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '0.9rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: 'var(--text-secondary)' }}>Target GATE Exam:</span>
+                    <span className={`badge ${profile.device_signature?.targeting_gate ? 'badge-success' : 'badge-primary'}`}>
+                      {profile.device_signature?.targeting_gate ? 'Active' : 'Inactive'}
+                    </span>
                   </div>
-                ))}
-              </div>
-            )}
-            <button className="btn btn-secondary" onClick={() => onTabChange('skill_mesh')} style={{ width: '100%', marginTop: '24px', height: '44px' }}>
-              <span>View Full Skill Mesh</span>
-              <ArrowRight size={16} />
-            </button>
+                  {profile.device_signature?.targeting_gate && (
+                    <>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ color: 'var(--text-secondary)' }}>Primary Paper:</span>
+                        <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{profile.device_signature?.gate_paper_1 || 'N/A'}</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ color: 'var(--text-secondary)' }}>Secondary Paper:</span>
+                        <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{profile.device_signature?.gate_paper_2 || 'None'}</span>
+                      </div>
+                    </>
+                  )}
+                  <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '12px', marginTop: '4px' }}>
+                    <span style={{ color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Syllabus Reference:</span>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--text-primary)', wordBreak: 'break-all', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: 1.4, margin: 0 }}>
+                      {profile.device_signature?.syllabus_referral || 'No custom syllabus linked. Update in profile settings.'}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <p style={{ color: 'var(--text-secondary)' }}>Loading syllabus targets...</p>
+              )}
+            </div>
+          </div>
+
+          {/* Focus Subtopics */}
+          <div className="glass-card">
+            <div className="glass-card-header" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <AlertTriangle size={20} style={{ color: 'var(--error)' }} />
+              <h3 style={{ fontSize: '1.2rem', fontWeight: 700 }}>Weakest Concept Areas</h3>
+            </div>
+            <div className="glass-card-body" style={{ marginTop: '16px' }}>
+              {weakNodes.length === 0 ? (
+                <p style={{ color: 'var(--text-secondary)' }}>No weak concepts. Keep learning!</p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  {weakNodes.map((node) => (
+                    <div key={node.node_id} style={{ padding: '12px 16px', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border-color)', borderRadius: '10px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                        <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-primary)' }}>{node.concept_name}</span>
+                        <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--error)' }}>{(parseFloat(node.expected_mastery) * 100).toFixed(0)}%</span>
+                      </div>
+                      <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: '3px', overflow: 'hidden' }}>
+                        <div style={{ width: `${parseFloat(node.expected_mastery) * 100}%`, height: '100%', background: 'var(--error)', borderRadius: '3px' }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <button className="btn btn-secondary" onClick={() => onTabChange('skill_mesh')} style={{ width: '100%', marginTop: '24px', height: '44px' }}>
+                <span>View Full Skill Mesh</span>
+                <ArrowRight size={16} />
+              </button>
+            </div>
           </div>
         </div>
       </div>
