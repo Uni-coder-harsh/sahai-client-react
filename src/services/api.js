@@ -148,6 +148,10 @@ class ApiService {
     return this._request(`/questions/practice?user_id=${userId}`);
   }
 
+  async fetchAttemptHistory(userId) {
+    return this._request(`/questions/history?user_id=${userId}`);
+  }
+
   async sendTelemetry(payload) {
     return this._request('/telemetry', {
       method: 'POST',

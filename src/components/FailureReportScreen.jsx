@@ -1,20 +1,36 @@
 import React, { useState, useEffect } from 'react';
-import { AlertOctagon, HelpCircle, CornerDownRight, CheckCircle2, Lightbulb, Trash2 } from 'lucide-react';
+import { AlertOctagon, HelpCircle, CornerDownRight, CheckCircle2, Lightbulb, Trash2, X } from 'lucide-react';
+import { api } from '../services/api';
 
 export default function FailureReportScreen({ user }) {
   const [failures, setFailures] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const list = JSON.parse(localStorage.getItem(`failures_${user.id}`) || '[]');
-    setFailures(list);
+    let active = true;
+    const loadHistory = async () => {
+      try {
+        setLoading(true);
+        const attempts = await api.fetchAttemptHistory(user.id);
+        if (active) {
+          const incorrect = attempts
+            .filter(att => att.is_correct === false)
+            .map(att => ({
+              ...att,
+              timestamp: att.created_at,
+              misconceptions: att.misconceptions ? att.misconceptions.split(', ') : []
+            }));
+          setFailures(incorrect);
+        }
+      } catch (err) {
+        console.error("Failed to load attempt history:", err);
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+    loadHistory();
+    return () => { active = false; };
   }, [user.id]);
-
-  const handleClearLogs = () => {
-    if (window.confirm('Are you sure you want to clear your local failure history logs?')) {
-      localStorage.removeItem(`failures_${user.id}`);
-      setFailures([]);
-    }
-  };
 
   const getRemedialTip = (misconceptionId) => {
     // Return friendly advice based on typical misconceptions
@@ -31,6 +47,14 @@ export default function FailureReportScreen({ user }) {
     return tips[matchKey] || "Review the basic definitions of this concept. Focus on coding sprints and execute similar examples in the Sandbox.";
   };
 
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
+        <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Loading diagnostic failure history...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="animate-fade-in">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
@@ -41,13 +65,6 @@ export default function FailureReportScreen({ user }) {
           </h1>
           <p style={{ color: 'var(--text-secondary)' }}>Review incorrect submissions and misconceptions logged during practice sprints.</p>
         </div>
-
-        {failures.length > 0 && (
-          <button className="btn btn-secondary" onClick={handleClearLogs} style={{ height: '40px', borderColor: 'rgba(239, 68, 68, 0.3)', color: '#ef4444' }}>
-            <Trash2 size={16} />
-            <span>Clear Logs</span>
-          </button>
-        )}
       </div>
 
       {failures.length === 0 ? (
