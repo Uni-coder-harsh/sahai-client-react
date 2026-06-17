@@ -6,7 +6,6 @@ import PersonalizeScreen from './components/PersonalizeScreen';
 import InitialTestScreen from './components/InitialTestScreen';
 import DashboardScreen from './components/DashboardScreen';
 import SkillMeshScreen from './components/SkillMeshScreen';
-import SandboxScreen from './components/SandboxScreen';
 import FailureReportScreen from './components/FailureReportScreen';
 import ProfileScreen from './components/ProfileScreen';
 import GuestLandingScreen from './components/GuestLandingScreen';
@@ -275,15 +274,6 @@ export default function App() {
             </button>
 
             <button
-              onClick={() => navigate('/sandbox')}
-              className={`nav-link ${activeTab === 'sandbox' ? 'active' : ''}`}
-              style={{ background: 'none', border: 'none', width: '100%', textTransform: 'none', fontFamily: 'inherit', textAlign: 'left' }}
-            >
-              <Code size={18} />
-              <span>Code Sandbox</span>
-            </button>
-
-            <button
               onClick={() => navigate('/failures')}
               className={`nav-link ${activeTab === 'failures' ? 'active' : ''}`}
               style={{ background: 'none', border: 'none', width: '100%', textTransform: 'none', fontFamily: 'inherit', textAlign: 'left' }}
@@ -355,7 +345,6 @@ export default function App() {
       <Route path="/dashboard" element={renderPrivateRoute(<DashboardScreen user={user} onTabChange={(tab) => navigate(`/${tab}`)} />)} />
       <Route path="/qbank" element={renderPrivateRoute(<QuestionBankScreen user={user} />)} />
       <Route path="/mesh" element={renderPrivateRoute(<SkillMeshScreen user={user} />)} />
-      <Route path="/sandbox" element={renderPrivateRoute(<SandboxScreen user={user} />)} />
       <Route path="/failures" element={renderPrivateRoute(<FailureReportScreen user={user} />)} />
       <Route path="/profile" element={renderPrivateRoute(<ProfileScreen user={user} onLogout={handleLogout} />)} />
       <Route path="/logs" element={renderPrivateRoute(<DebugConsoleScreen />)} />

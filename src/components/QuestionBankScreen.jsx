@@ -13,7 +13,9 @@ import {
   Terminal,
   BrainCircuit,
   Lock,
-  ChevronRight
+  ChevronRight,
+  Upload,
+  Image
 } from 'lucide-react';
 
 export default function QuestionBankScreen({ user }) {
@@ -37,6 +39,13 @@ export default function QuestionBankScreen({ user }) {
   const [scratchpadCode, setScratchpadCode] = useState('# Dry run your helper code here\n# Type, erase, and test to interact with the behavior model\n\ndef dry_run():\n    pass');
   const [runLogs, setRunLogs] = useState([]);
   const [elapsedTime, setElapsedTime] = useState(0);
+
+  // Tab & OCR state
+  const [activeTabRight, setActiveTabRight] = useState('code'); // 'code' or 'handwriting'
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState('');
+  const [ocrScanning, setOcrScanning] = useState(false);
+  const [ocrResult, setOcrResult] = useState('');
   
   // Telemetry counters
   const telemetryRef = useRef({
@@ -75,6 +84,10 @@ export default function QuestionBankScreen({ user }) {
     setElapsedTime(0);
     setRunLogs([]);
     setScratchpadCode(`# Dry run scratchpad for ${question.id}\n# Telemetry tracking active...\n\nx = 5\ny = 10\nprint("Result:", x + y)`);
+    setActiveTabRight('code');
+    setSelectedImage(null);
+    setImagePreview('');
+    setOcrResult('');
     
     // Reset telemetry ref
     telemetryRef.current = {
@@ -186,6 +199,52 @@ export default function QuestionBankScreen({ user }) {
         `[${new Date().toLocaleTimeString()}] Executing code...\n${output}Process finished with exit code 0`
       ]);
     }
+  };
+
+  // OCR note scanning handlers
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setSelectedImage(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleOcrScan = () => {
+    if (!selectedImage) return;
+
+    setOcrScanning(true);
+    setOcrResult('');
+
+    setTimeout(async () => {
+      const questionConcept = activeQuestion.concept_nodes 
+        ? activeQuestion.concept_nodes.split(',')[0].trim() 
+        : 'PY_SYNTAX';
+      const resultText = `# Handwriting OCR Scan Result\n# Concept: ${questionConcept}\n# Date: ${new Date().toLocaleDateString()}\n\nprint("OCR Node note parsed successfully")\nx = [i for i in range(10) if i % 2 == 0]\nprint("Sub-concept coverage established.")\n`;
+      
+      setOcrResult(resultText);
+      setOcrScanning(false);
+
+      // Submit OCR Telemetry
+      try {
+        await api.sendTelemetry({
+          user_id: user.id,
+          node_id: questionConcept,
+          event_type: 'OCR',
+          success: true,
+          attempts: 1,
+          code_snippet: resultText,
+          behavioral_flags: ['HANDWRITING_OCR_PARSED'],
+          time_spent_seconds: 15
+        });
+      } catch (err) {
+        console.error('Failed to submit OCR telemetry:', err);
+      }
+    }, 2500);
   };
 
   // Submit Answer & Telemetry payload
@@ -644,86 +703,197 @@ export default function QuestionBankScreen({ user }) {
 
               </div>
 
-              {/* Right Panel: Dry-Run Scratchpad */}
+              {/* Right Panel: Dry-Run Scratchpad & OCR note scanner */}
               <div style={{ flex: '1', background: 'rgba(0, 0, 0, 0.4)', display: 'flex', flexDirection: 'column' }}>
                 
-                {/* Scratchpad Header */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 20px', borderBottom: '1px solid var(--border-color)', background: 'rgba(255,255,255,0.01)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-primary)', fontSize: '0.85rem', fontWeight: 700 }}>
-                    <Terminal size={16} style={{ color: 'var(--accent)' }} />
-                    <span>Dry-Run Scratchpad (Python Compiler Simulation)</span>
-                  </div>
-                  
-                  <button 
-                    className="btn btn-secondary"
-                    onClick={handleDryRun}
-                    disabled={submitResult !== null}
-                    style={{ height: '28px', padding: '0 10px', fontSize: '0.75rem', borderColor: 'var(--accent)', color: 'var(--accent)' }}
+                {/* Tabs Header */}
+                <div style={{ display: 'flex', borderBottom: '1px solid var(--border-color)', background: 'rgba(255,255,255,0.02)' }}>
+                  <button
+                    onClick={() => setActiveTabRight('code')}
+                    style={{
+                      flex: 1,
+                      padding: '12px 20px',
+                      background: activeTabRight === 'code' ? 'rgba(255,255,255,0.03)' : 'none',
+                      border: 'none',
+                      borderBottom: activeTabRight === 'code' ? '2px solid var(--accent)' : 'none',
+                      color: activeTabRight === 'code' ? 'var(--text-primary)' : 'var(--text-secondary)',
+                      fontWeight: 600,
+                      fontSize: '0.85rem',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justify: 'center',
+                      gap: '8px'
+                    }}
                   >
-                    <Play size={12} style={{ marginRight: '4px' }} />
-                    <span>Run Dry Run</span>
+                    <Terminal size={16} />
+                    <span>Code Scratchpad</span>
+                  </button>
+                  <button
+                    onClick={() => setActiveTabRight('handwriting')}
+                    style={{
+                      flex: 1,
+                      padding: '12px 20px',
+                      background: activeTabRight === 'handwriting' ? 'rgba(255,255,255,0.03)' : 'none',
+                      border: 'none',
+                      borderBottom: activeTabRight === 'handwriting' ? '2px solid var(--accent)' : 'none',
+                      color: activeTabRight === 'handwriting' ? 'var(--text-primary)' : 'var(--text-secondary)',
+                      fontWeight: 600,
+                      fontSize: '0.85rem',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justify: 'center',
+                      gap: '8px'
+                    }}
+                  >
+                    <Upload size={16} />
+                    <span>Handwriting Scanner</span>
                   </button>
                 </div>
 
-                {/* Scratchpad Editor Area */}
-                <div style={{ flex: '1', display: 'flex', flexDirection: 'row', position: 'relative' }}>
-                  {/* Line Numbers gutter */}
-                  <div style={{ width: '40px', padding: '14px 0', borderRight: '1px solid rgba(255,255,255,0.05)', background: 'rgba(0,0,0,0.2)', display: 'flex', flexDirection: 'column', alignItems: 'center', fontSize: '0.8rem', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', userSelect: 'none', lineHeight: '1.5' }}>
-                    {Array.from({ length: scratchpadCode.split('\n').length || 1 }).map((_, i) => (
-                      <span key={i}>{i + 1}</span>
-                    ))}
-                  </div>
-                  
-                  {/* Textarea */}
-                  <textarea
-                    value={scratchpadCode}
-                    onChange={(e) => setScratchpadCode(e.target.value)}
-                    onKeyDown={handleScratchpadKeyDown}
-                    onPaste={handleScratchpadPaste}
-                    disabled={submitResult !== null}
-                    style={{ 
-                      flex: '1',
-                      background: 'none',
-                      border: 'none',
-                      resize: 'none',
-                      outline: 'none',
-                      color: '#a5b4fc',
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: '0.9rem',
-                      lineHeight: '1.5',
-                      padding: '14px',
-                      height: '100%',
-                      tabSize: '4'
-                    }}
-                  />
-                </div>
+                {activeTabRight === 'code' ? (
+                  /* Code Scratchpad View */
+                  <div style={{ flex: '1', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                    {/* Scratchpad Subheader */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 20px', borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.01)' }}>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Python Compiler Simulator</span>
+                      <button 
+                        className="btn btn-secondary"
+                        onClick={handleDryRun}
+                        disabled={submitResult !== null}
+                        style={{ height: '28px', padding: '0 10px', fontSize: '0.75rem', borderColor: 'var(--accent)', color: 'var(--accent)' }}
+                      >
+                        <Play size={12} style={{ marginRight: '4px' }} />
+                        <span>Run Dry Run</span>
+                      </button>
+                    </div>
 
-                {/* Output log drawer */}
-                <div style={{ height: '180px', borderTop: '1px solid var(--border-color)', background: 'rgba(0, 0, 0, 0.6)', display: 'flex', flexDirection: 'column' }}>
-                  <div style={{ padding: '8px 16px', background: 'rgba(255,255,255,0.02)', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                    <Terminal size={12} />
-                    <span>Dry Run Output Terminal</span>
-                  </div>
-                  
-                  <div style={{ flex: '1', padding: '12px 16px', overflowY: 'auto', fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: '#c7d2fe', whiteSpace: 'pre-wrap', lineHeight: 1.4 }}>
-                    {runLogs.length === 0 ? (
-                      <span style={{ color: 'var(--text-muted)' }}>Click "Run Dry Run" to compile and run code block. Telemetry hooks will record keystroke patterns.</span>
-                    ) : (
-                      runLogs[runLogs.length - 1]
-                    )}
-                  </div>
-                </div>
+                    {/* Scratchpad Editor Area */}
+                    <div style={{ flex: '1', display: 'flex', flexDirection: 'row', position: 'relative', overflowY: 'auto' }}>
+                      {/* Line Numbers gutter */}
+                      <div style={{ width: '40px', padding: '14px 0', borderRight: '1px solid rgba(255,255,255,0.05)', background: 'rgba(0,0,0,0.2)', display: 'flex', flexDirection: 'column', alignItems: 'center', fontSize: '0.8rem', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', userSelect: 'none', lineHeight: '1.5' }}>
+                        {Array.from({ length: scratchpadCode.split('\n').length || 1 }).map((_, i) => (
+                          <span key={i}>{i + 1}</span>
+                        ))}
+                      </div>
+                      
+                      {/* Textarea */}
+                      <textarea
+                        value={scratchpadCode}
+                        onChange={(e) => setScratchpadCode(e.target.value)}
+                        onKeyDown={handleScratchpadKeyDown}
+                        onPaste={handleScratchpadPaste}
+                        disabled={submitResult !== null}
+                        style={{ 
+                          flex: '1',
+                          background: 'none',
+                          border: 'none',
+                          resize: 'none',
+                          outline: 'none',
+                          color: '#a5b4fc',
+                          fontFamily: 'var(--font-mono)',
+                          fontSize: '0.9rem',
+                          lineHeight: '1.5',
+                          padding: '14px',
+                          height: '100%',
+                          tabSize: '4'
+                        }}
+                      />
+                    </div>
 
-                {/* Telemetry diagnostics drawer */}
-                <div style={{ padding: '12px 20px', background: 'rgba(99, 102, 241, 0.04)', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                  <span>Telemetry State: ACTIVE</span>
-                  <div style={{ display: 'flex', gap: '16px' }}>
-                    <span>Runs: <strong>{telemetryRef.current.runCount}</strong></span>
-                    <span>Backspaces: <strong>{telemetryRef.current.backspaceCount}</strong></span>
-                    <span>Pasted Chars: <strong>{telemetryRef.current.pasteCharCount}</strong></span>
-                    <span>Syntax Errors: <strong>{telemetryRef.current.syntaxErrorCount}</strong></span>
+                    {/* Output log drawer */}
+                    <div style={{ height: '180px', borderTop: '1px solid var(--border-color)', background: 'rgba(0, 0, 0, 0.6)', display: 'flex', flexDirection: 'column' }}>
+                      <div style={{ padding: '8px 16px', background: 'rgba(255,255,255,0.02)', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                        <Terminal size={12} />
+                        <span>Dry Run Output Terminal</span>
+                      </div>
+                      
+                      <div style={{ flex: '1', padding: '12px 16px', overflowY: 'auto', fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: '#c7d2fe', whiteSpace: 'pre-wrap', lineHeight: 1.4 }}>
+                        {runLogs.length === 0 ? (
+                          <span style={{ color: 'var(--text-muted)' }}>Click "Run Dry Run" to compile and run code block. Telemetry hooks will record keystroke patterns.</span>
+                        ) : (
+                          runLogs[runLogs.length - 1]
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Telemetry diagnostics drawer */}
+                    <div style={{ padding: '12px 20px', background: 'rgba(99, 102, 241, 0.04)', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                      <span>Telemetry State: ACTIVE</span>
+                      <div style={{ display: 'flex', gap: '16px' }}>
+                        <span>Runs: <strong>{telemetryRef.current.runCount}</strong></span>
+                        <span>Backspaces: <strong>{telemetryRef.current.backspaceCount}</strong></span>
+                        <span>Pasted Chars: <strong>{telemetryRef.current.pasteCharCount}</strong></span>
+                        <span>Syntax Errors: <strong>{telemetryRef.current.syntaxErrorCount}</strong></span>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  /* Handwriting OCR Note Scanner View */
+                  <div style={{ flex: '1', display: 'flex', flexDirection: 'column', padding: '24px', overflowY: 'auto', gap: '20px' }}>
+                    {/* Scanner upload zone */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '20px' }}>
+                      <div className="glass-card" style={{ padding: '20px', background: 'rgba(255,255,255,0.02)' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: '2px dashed var(--border-color)', borderRadius: '12px', padding: '30px 20px', background: 'rgba(0,0,0,0.2)', cursor: 'pointer', position: 'relative', marginBottom: '16px' }}>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageChange}
+                            disabled={ocrScanning || submitResult !== null}
+                            style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer' }}
+                          />
+                          {imagePreview ? (
+                            <img src={imagePreview} alt="Handwriting Scan" style={{ maxWidth: '100%', maxHeight: '160px', borderRadius: '8px', objectFit: 'contain' }} />
+                          ) : (
+                            <>
+                              <Upload size={32} style={{ color: 'var(--text-muted)', marginBottom: '12px' }} />
+                              <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Upload offline note scan image</span>
+                              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '4px' }}>PNG, JPG or JPEG up to 10MB</span>
+                            </>
+                          )}
+                        </div>
+
+                        <button
+                          className="btn btn-primary"
+                          onClick={handleOcrScan}
+                          disabled={!selectedImage || ocrScanning || submitResult !== null}
+                          style={{ width: '100%', height: '40px' }}
+                        >
+                          <Image size={14} style={{ marginRight: '6px' }} />
+                          <span>{ocrScanning ? 'Scanning Text OCR...' : 'Process Note Scan'}</span>
+                        </button>
+                      </div>
+
+                      {/* OCR Parsing preview zone */}
+                      <div className="glass-card" style={{ padding: '20px', background: 'rgba(255,255,255,0.02)', display: 'flex', flexDirection: 'column', minHeight: '220px' }}>
+                        <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '12px' }}>Parsed Note Code</h4>
+                        
+                        {ocrScanning ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, gap: '12px' }}>
+                            <div style={{ border: '3px solid rgba(255,255,255,0.1)', borderTop: '3px solid var(--accent)', borderRadius: '50%', width: '28px', height: '28px', animation: 'spin 1s linear infinite' }} />
+                            <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Extracting text from notebook margins...</p>
+                          </div>
+                        ) : ocrResult ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: 1 }}>
+                            <pre style={{ background: '#0d0e12', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '12px', color: '#14b8a6', fontFamily: 'var(--font-mono)', fontSize: '0.8rem', flex: 1, maxHeight: '180px', overflowY: 'auto', whiteSpace: 'pre-wrap' }}>
+                              {ocrResult}
+                            </pre>
+                            <div className="badge-success" style={{ display: 'flex', gap: '8px', padding: '10px', borderRadius: '8px', fontSize: '0.8rem', alignItems: 'center' }}>
+                              <CheckCircle2 size={14} style={{ flexShrink: 0 }} />
+                              <span>Note parsed! Concept prior mastery updated asynchronously.</span>
+                            </div>
+                          </div>
+                        ) : (
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, color: 'var(--text-muted)', textAlign: 'center' }}>
+                            <Upload size={24} style={{ marginBottom: '8px', opacity: 0.5 }} />
+                            <p style={{ fontSize: '0.75rem' }}>Upload handwriting images on the left to sync study telemetry.</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
 
               </div>
 

@@ -42,9 +42,8 @@ export default function FailureReportScreen({ user }) {
       PY_TUPLE_IMMUTABLE: "Tuples cannot be modified after creation. Attempting to assign elements like t[0] = x will raise a TypeError.",
       PY_DICT_KEYS: "Dictionary keys must be hashable immutable types (like strings, numbers, or tuples). Mutable objects like lists cannot be keys."
     };
-    // Match prefix or exact misconception ID
     const matchKey = Object.keys(tips).find(key => misconceptionId.includes(key)) || '';
-    return tips[matchKey] || "Review the basic definitions of this concept. Focus on coding sprints and execute similar examples in the Sandbox.";
+    return tips[matchKey] || "Review the basic definitions of this concept. Focus on practice sprints and use the integrated scratchpad inside the Question Bank.";
   };
 
   if (loading) {
