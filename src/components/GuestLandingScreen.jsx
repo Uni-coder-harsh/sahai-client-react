@@ -96,7 +96,7 @@ export default function GuestLandingScreen() {
               </div>
               <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '12px' }}>3. Asymmetric DAG Ripple</h3>
               <p style={{ color: 'var(--text-secondary)', fontSize: '0.92rem', lineHeight: 1.6 }}>
-                Updating a node vibrates the web. If a student fails <code>Arithmetic</code>, there is a 65% probability ($W_{diag} = 0.65$) that their foundational <code>Type Conversion</code> is weak.
+                Updating a node vibrates the web. If a student fails <code>Arithmetic</code>, there is a 65% probability (W_diag = 0.65) that their foundational <code>Type Conversion</code> is weak.
                 We propagate a fraction of the failure penalty backward:
                 <div style={{ fontFamily: 'var(--font-mono)', background: 'rgba(0,0,0,0.3)', padding: '12px', borderRadius: '8px', margin: '12px 0', color: '#ec4899', textAlign: 'center', fontSize: '0.85rem' }}>
                   Penalty = 0.85 × 0.65 = 0.5525
