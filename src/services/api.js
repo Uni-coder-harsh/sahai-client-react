@@ -1,39 +1,39 @@
 export const getBaseUrl = () => {
-  let url = null;
+  let apiUrl = null;
 
   // 1. Check custom URL override
   const customUrl = localStorage.getItem('custom_api_url');
   if (customUrl) {
-    url = customUrl.trim();
+    apiUrl = customUrl.trim();
   } 
   // 2. Check Vite env variables
   else if (import.meta.env && import.meta.env.VITE_API_URL) {
-    url = import.meta.env.VITE_API_URL.trim();
+    apiUrl = import.meta.env.VITE_API_URL.trim();
   } 
   // 3. Fallback to origin pathing for production
   else if (typeof window !== 'undefined') {
     if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-      url = `${window.location.origin}/api`;
+      apiUrl = `${window.location.origin}/api`;
     }
   }
 
-  if (!url) return null;
+  if (!apiUrl) return null;
 
   // Auto-resolve missing '/api' suffix if omitted
-  if (!url.endsWith('/api') && !url.endsWith('/api/')) {
-    url = url.endsWith('/') ? `${url}api` : `${url}/api`;
+  if (!apiUrl.endsWith('/api') && !apiUrl.endsWith('/api/')) {
+    apiUrl = apiUrl.endsWith('/') ? `${apiUrl}api` : `${apiUrl}/api`;
   }
 
   // Auto-resolve missing absolute protocol (fixes browser prepending origin hostname errors)
-  if (!url.startsWith('http://') && !url.startsWith('https://')) {
-    if (url.includes('localhost') || url.includes('127.0.0.1')) {
-      url = `http://${url}`;
+  if (!apiUrl.startsWith('http://') && !apiUrl.startsWith('https://')) {
+    if (apiUrl.includes('localhost') || apiUrl.includes('127.0.0.1')) {
+      apiUrl = `http://${apiUrl}`;
     } else {
-      url = `https://${url}`;
+      apiUrl = `https://${apiUrl}`;
     }
   }
 
-  return url;
+  return apiUrl;
 };
 
 export const debugLogs = [];
