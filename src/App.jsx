@@ -21,7 +21,9 @@ import {
   LogOut,
   Sparkles,
   BookOpen,
-  Terminal
+  Terminal,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 
 export default function App() {
@@ -29,6 +31,10 @@ export default function App() {
   const [token, setToken] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
+  
+  // Collapsible sidebar state variables
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
+  const [isSidebarHovered, setIsSidebarHovered] = useState(false);
   
   // Progression States
   const [needsPersonalization, setNeedsPersonalization] = useState(false);
@@ -217,24 +223,55 @@ export default function App() {
       }
     }
 
+    const isExpanded = isSidebarExpanded || isSidebarHovered;
+
     return (
       <div className="app-container">
         {/* Sidebar Navigation */}
-        <aside className="sidebar">
+        <aside 
+          className={`sidebar ${isExpanded ? 'expanded' : 'collapsed'}`}
+          onMouseEnter={() => setIsSidebarHovered(true)}
+          onMouseLeave={() => setIsSidebarHovered(false)}
+        >
           {/* Brand details */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '0 8px 24px 8px', borderBottom: '1px solid var(--border-color)', marginBottom: '16px' }}>
-            <Sparkles size={24} style={{ color: 'var(--primary)' }} />
-            <span style={{ fontSize: '1.4rem', fontWeight: 800, background: 'linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', letterSpacing: '-0.02em' }}>
+          <div className="brand-container" style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '0 8px 24px 8px', borderBottom: '1px solid var(--border-color)', marginBottom: '16px', position: 'relative' }}>
+            <Sparkles size={24} style={{ color: 'var(--primary)', flexShrink: 0 }} />
+            <span className="brand-text" style={{ fontSize: '1.4rem', fontWeight: 800, background: 'linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', letterSpacing: '-0.02em' }}>
               SahAI Core
             </span>
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsSidebarExpanded(!isSidebarExpanded);
+              }}
+              style={{ 
+                position: 'absolute', 
+                right: isExpanded ? '0px' : 'calc(50% - 13px)', 
+                top: '0px', 
+                background: 'rgba(255,255,255,0.03)', 
+                border: '1px solid var(--border-color)', 
+                color: 'var(--text-secondary)', 
+                cursor: 'pointer', 
+                padding: '4px', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                borderRadius: '6px',
+                transition: 'all 0.3s ease',
+                zIndex: 10
+              }}
+              title={isSidebarExpanded ? "Collapse Sidebar" : "Pin Sidebar"}
+            >
+              {isSidebarExpanded ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
+            </button>
           </div>
 
           {/* User preview */}
-          <div style={{ padding: '12px 14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-color)', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-            <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.9rem', color: '#fff' }}>
+          <div className="user-card" style={{ padding: '12px 14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-color)', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+            <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.9rem', color: '#fff', flexShrink: 0 }}>
               {user.name ? user.name[0].toUpperCase() : user.username[0].toUpperCase()}
             </div>
-            <div style={{ overflow: 'hidden', flex: 1 }}>
+            <div className="user-info" style={{ overflow: 'hidden', flex: 1 }}>
               <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
                 {user.name || user.username}
               </div>
@@ -251,8 +288,8 @@ export default function App() {
               className={`nav-link ${activeTab === 'dashboard' ? 'active' : ''}`}
               style={{ background: 'none', border: 'none', width: '100%', textTransform: 'none', fontFamily: 'inherit', textAlign: 'left' }}
             >
-              <LayoutDashboard size={18} />
-              <span>Dashboard</span>
+              <LayoutDashboard size={18} style={{ flexShrink: 0 }} />
+              <span className="nav-text">Dashboard</span>
             </button>
             
             <button
@@ -260,8 +297,8 @@ export default function App() {
               className={`nav-link ${activeTab === 'qbank' ? 'active' : ''}`}
               style={{ background: 'none', border: 'none', width: '100%', textTransform: 'none', fontFamily: 'inherit', textAlign: 'left' }}
             >
-              <BookOpen size={18} />
-              <span>Question Bank</span>
+              <BookOpen size={18} style={{ flexShrink: 0 }} />
+              <span className="nav-text">Question Bank</span>
             </button>
 
             <button
@@ -269,8 +306,8 @@ export default function App() {
               className={`nav-link ${activeTab === 'mesh' ? 'active' : ''}`}
               style={{ background: 'none', border: 'none', width: '100%', textTransform: 'none', fontFamily: 'inherit', textAlign: 'left' }}
             >
-              <Network size={18} />
-              <span>Skill Mesh</span>
+              <Network size={18} style={{ flexShrink: 0 }} />
+              <span className="nav-text">Skill Mesh</span>
             </button>
 
             <button
@@ -278,8 +315,8 @@ export default function App() {
               className={`nav-link ${activeTab === 'failures' ? 'active' : ''}`}
               style={{ background: 'none', border: 'none', width: '100%', textTransform: 'none', fontFamily: 'inherit', textAlign: 'left' }}
             >
-              <AlertOctagon size={18} />
-              <span>Failure Logs</span>
+              <AlertOctagon size={18} style={{ flexShrink: 0 }} />
+              <span className="nav-text">Failure Logs</span>
             </button>
 
             <button
@@ -287,8 +324,8 @@ export default function App() {
               className={`nav-link ${activeTab === 'profile' ? 'active' : ''}`}
               style={{ background: 'none', border: 'none', width: '100%', textTransform: 'none', fontFamily: 'inherit', textAlign: 'left' }}
             >
-              <User size={18} />
-              <span>My Profile</span>
+              <User size={18} style={{ flexShrink: 0 }} />
+              <span className="nav-text">My Profile</span>
             </button>
 
             <button
@@ -296,8 +333,8 @@ export default function App() {
               className={`nav-link ${activeTab === 'logs' ? 'active' : ''}`}
               style={{ background: 'none', border: 'none', width: '100%', textTransform: 'none', fontFamily: 'inherit', textAlign: 'left' }}
             >
-              <Terminal size={18} />
-              <span>Debug Console</span>
+              <Terminal size={18} style={{ flexShrink: 0 }} />
+              <span className="nav-text">Debug Console</span>
             </button>
           </nav>
 
@@ -306,9 +343,10 @@ export default function App() {
             <button
               onClick={handleLogout}
               style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', padding: '10px 14px', borderRadius: '8px', background: 'none', border: 'none', color: '#f87171', fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer', transition: 'all var(--transition-fast)' }}
+              className="logout-btn"
             >
-              <LogOut size={16} />
-              <span>Log Out</span>
+              <LogOut size={16} style={{ flexShrink: 0 }} />
+              <span className="logout-text">Log Out</span>
             </button>
           </div>
         </aside>
