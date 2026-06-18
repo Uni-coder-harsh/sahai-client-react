@@ -734,20 +734,21 @@ export default function QuestionBankScreen({ user }) {
                 // SOLVER LAYOUT
                 <>
                   {/* Left Panel: Question description + Option picker (MCQ) */}
-                  <div style={{ flex: questionType === 'mcq' ? '1' : '1.1', padding: '24px', overflowY: 'auto', borderRight: questionType === 'mcq' ? 'none' : '1px solid var(--border-color)', display: 'flex', flexDirection: 'column' }}>
+                  <div style={{ flex: questionType === 'mcq' ? '1' : '1.1', padding: '24px', overflowY: 'hidden', borderRight: questionType === 'mcq' ? 'none' : '1px solid var(--border-color)', display: 'flex', flexDirection: 'column' }}>
                     
-                    {/* Question text block */}
-                    <div style={{ marginBottom: '24px' }}>
-                      <p style={{ fontSize: '1.05rem', lineHeight: 1.6, color: 'var(--text-primary)', whiteSpace: 'pre-wrap', fontWeight: 500 }}>
-                        {questionDetails?.question_text || activeQuestion.question_text}
-                      </p>
-                    </div>
+                    {/* Scrollable Question details & Options */}
+                    <div style={{ flex: '1', overflowY: 'auto', marginBottom: '20px', paddingRight: '8px' }}>
+                      {/* Question text block */}
+                      <div style={{ marginBottom: '24px' }}>
+                        <p style={{ fontSize: '1.05rem', lineHeight: 1.6, color: 'var(--text-primary)', whiteSpace: 'pre-wrap', fontWeight: 500 }}>
+                          {questionDetails?.question_text || activeQuestion.question_text}
+                        </p>
+                      </div>
 
-                    {questionType === 'mcq' ? (
-                      /* MCQ Mode options */
-                      <>
-                        {questionDetails ? (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '32px' }}>
+                      {questionType === 'mcq' && (
+                        /* MCQ Mode options */
+                        questionDetails ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                             {questionDetails.options?.map((opt) => (
                               <label 
                                 key={opt.id} 
@@ -782,24 +783,26 @@ export default function QuestionBankScreen({ user }) {
                           <div style={{ display: 'flex', justifyContent: 'center', padding: '30px' }}>
                             <div style={{ border: '3px solid rgba(255,255,255,0.1)', borderTop: '3px solid var(--primary)', borderRadius: '50%', width: '30px', height: '30px', animation: 'spin 1s linear infinite' }} />
                           </div>
-                        )}
+                        )
+                      )}
+                    </div>
 
-                        {/* Submit Actions */}
-                        <div style={{ marginTop: 'auto', borderTop: '1px solid var(--border-color)', paddingTop: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>* Telemetry signature will be transmitted synchronously on submit</span>
-                          <button 
-                            className="btn btn-primary"
-                            onClick={handleSubmitAnswer}
-                            disabled={submitLoading || !selectedOptionId}
-                            style={{ height: '44px', padding: '0 28px' }}
-                          >
-                            {submitLoading ? 'Calculating Updates...' : 'Submit Response'}
-                          </button>
-                        </div>
-                      </>
+                    {questionType === 'mcq' ? (
+                      /* Submit Actions */
+                      <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>* Telemetry signature will be transmitted synchronously on submit</span>
+                        <button 
+                          className="btn btn-primary"
+                          onClick={handleSubmitAnswer}
+                          disabled={submitLoading || !selectedOptionId}
+                          style={{ height: '44px', padding: '0 28px' }}
+                        >
+                          {submitLoading ? 'Calculating Updates...' : 'Submit Response'}
+                        </button>
+                      </div>
                     ) : (
                       /* Code / Handwriting Instructions block */
-                      <div style={{ marginTop: 'auto', background: 'rgba(255,255,255,0.02)', padding: '16px', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
+                      <div style={{ background: 'rgba(255,255,255,0.02)', padding: '16px', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
                         <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--accent)', display: 'block', marginBottom: '8px' }}>
                           {questionType === 'code' ? '💻 Coding Challenge Mode' : '📝 Handwriting OCR Mode'}
                         </span>

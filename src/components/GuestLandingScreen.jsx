@@ -12,7 +12,7 @@ export default function GuestLandingScreen() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <Sparkles size={28} style={{ color: 'var(--primary)' }} />
           <span style={{ fontSize: '1.6rem', fontWeight: 800, background: 'linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', letterSpacing: '-0.02em' }}>
-            SahAI Core
+            SahAI
           </span>
         </div>
         <div style={{ display: 'flex', gap: '16px' }}>
@@ -183,7 +183,7 @@ export default function GuestLandingScreen() {
 
       {/* Footer */}
       <footer style={{ borderTop: '1px solid var(--border-color)', padding: '40px 8%', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-        <p>© 2026 SahAI Core. Designed for hackathons, backed by mathematical cognitive diagnostics.</p>
+        <p>© 2026 SahAI Core. Designed for Students, backed by Mathematical Cognitives.</p>
       </footer>
     </div>
   );
