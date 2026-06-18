@@ -47,6 +47,15 @@ export default function QuestionBankScreen({ user }) {
   const [ocrScanning, setOcrScanning] = useState(false);
   const [ocrResult, setOcrResult] = useState('');
   
+  // Floating Toast state
+  const [toastMessage, setToastMessage] = useState(null);
+  const triggerToast = (message) => {
+    setToastMessage(message);
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 4500);
+  };
+  
   // Telemetry counters
   const telemetryRef = useRef({
     timeSpent: 0,
@@ -271,6 +280,14 @@ export default function QuestionBankScreen({ user }) {
     try {
       const res = await api.submitAnswer(telemetryPayload);
       setSubmitResult(res);
+      
+      if (res.telemetry_updates && res.telemetry_updates.length > 0) {
+        const summary = res.telemetry_updates.map(up => 
+          `${up.node_id}: E[K] = ${(up.expected_mastery * 100).toFixed(1)}%`
+        ).join(', ');
+        triggerToast(`Bayesian update synced: ${summary}`);
+        console.log('[Developer Help] Bayesian parameters updated successfully:', res.telemetry_updates);
+      }
     } catch (err) {
       console.error(err);
       alert(err.message || 'Failed to submit answer.');
@@ -313,6 +330,9 @@ export default function QuestionBankScreen({ user }) {
           }
         ]
       });
+
+      triggerToast(`Code telemetry processed for node: ${conceptNode}`);
+      console.log('[Developer Help] Bayesian parameters updated via code telemetry:', conceptNode);
     } catch (err) {
       console.error(err);
       alert(err.message || 'Failed to submit code.');
@@ -347,6 +367,9 @@ export default function QuestionBankScreen({ user }) {
           }
         ]
       });
+
+      triggerToast(`Handwriting OCR telemetry processed for node: ${conceptNode}`);
+      console.log('[Developer Help] Bayesian parameters updated via handwriting telemetry:', conceptNode);
     } catch (err) {
       console.error(err);
       alert('Failed to submit note.');
@@ -979,6 +1002,43 @@ export default function QuestionBankScreen({ user }) {
 
           </div>
 
+        </div>
+      )}
+
+      {/* Floating Toast Notification */}
+      {toastMessage && (
+        <div style={{
+          position: 'fixed',
+          bottom: '24px',
+          right: '24px',
+          background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
+          color: '#ffffff',
+          padding: '14px 24px',
+          borderRadius: '12px',
+          boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3)',
+          zIndex: 9999,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          fontSize: '0.875rem',
+          fontWeight: '600',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+          fontFamily: 'Inter, sans-serif',
+          letterSpacing: '0.025em',
+          backdropFilter: 'blur(8px)',
+        }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '20px',
+            height: '20px',
+            borderRadius: '50%',
+            background: 'rgba(255, 255, 255, 0.2)',
+          }}>
+            ✓
+          </div>
+          <span>{toastMessage}</span>
         </div>
       )}
 
