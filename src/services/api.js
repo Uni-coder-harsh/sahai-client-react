@@ -1,5 +1,8 @@
+import { encryptPayload } from '../utils/crypto';
+
 export const getBaseUrl = () => {
   let apiUrl = null;
+
 
   // 1. Check custom URL override
   const customUrl = localStorage.getItem('custom_api_url');
@@ -255,9 +258,15 @@ class ApiService {
   }
 
   async sendTelemetry(payload) {
+    const cleanPayload = { ...payload };
+    delete cleanPayload.user_id; // DPDP Compliance: NEVER pass user_id in payload body
+    
+    const secretKey = (import.meta.env && import.meta.env.VITE_AES_SECRET_KEY) || 'sahai-super-secret-key-123456789';
+    const encryptedBody = await encryptPayload(cleanPayload, secretKey);
+    
     return this._request('/telemetry', {
       method: 'POST',
-      body: JSON.stringify(payload),
+      body: JSON.stringify(encryptedBody),
     });
   }
 }
