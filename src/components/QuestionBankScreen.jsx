@@ -261,8 +261,22 @@ export default function QuestionBankScreen({ user }) {
             setOcrResult(res.extracted_text);
             setOcrResponse(res);
             triggerToast('Handwritten code processed & evaluated successfully!');
+            if (res.developer_debug_logs && Array.isArray(res.developer_debug_logs)) {
+              console.log('%c=== [DEVELOPER DEBUG] HANDWRITING OCR PIPELINE ===', 'color: #00ffcc; font-weight: bold;');
+              res.developer_debug_logs.forEach(line => {
+                console.log(`[Python Engine] ${line}`);
+              });
+              console.log('%c==================================================', 'color: #00ffcc; font-weight: bold;');
+            }
           } else {
             setOcrResult('# OCR failed to extract text.\nPlease try with a clearer image.');
+            if (res.developer_debug_logs && Array.isArray(res.developer_debug_logs)) {
+              console.log('%c=== [DEVELOPER DEBUG] HANDWRITING OCR PIPELINE (FAILED) ===', 'color: #ff3333; font-weight: bold;');
+              res.developer_debug_logs.forEach(line => {
+                console.log(`[Python Engine] ${line}`);
+              });
+              console.log('%c==================================================', 'color: #ff3333; font-weight: bold;');
+            }
           }
         } catch (err) {
           console.error('Failed to process note scan:', err);
@@ -457,7 +471,7 @@ export default function QuestionBankScreen({ user }) {
         <div>
           <h1 style={{ fontSize: '2rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '10px' }}>
             <BookOpen style={{ color: 'var(--primary)' }} />
-            <span>LeetCode-Style Question Bank</span>
+            <span>SahAI Question Bank</span>
           </h1>
           <p style={{ color: 'var(--text-secondary)' }}>Practice customized MCQ problems, dry run code, and build your Bayesian cognitive mesh.</p>
         </div>
