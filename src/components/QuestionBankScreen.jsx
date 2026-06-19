@@ -46,6 +46,7 @@ export default function QuestionBankScreen({ user }) {
   const [imagePreview, setImagePreview] = useState('');
   const [ocrScanning, setOcrScanning] = useState(false);
   const [ocrResult, setOcrResult] = useState('');
+  const [ocrResponse, setOcrResponse] = useState(null);
   
   // Floating Toast state
   const [toastMessage, setToastMessage] = useState(null);
@@ -228,32 +229,53 @@ export default function QuestionBankScreen({ user }) {
 
     setOcrScanning(true);
     setOcrResult('');
+    setOcrResponse(null);
 
-    setTimeout(async () => {
-      const questionConcept = activeQuestion.concept_nodes 
-        ? activeQuestion.concept_nodes.split(',')[0].trim() 
-        : 'PY_SYNTAX';
-      const resultText = `# Handwriting OCR Scan Result\n# Concept: ${questionConcept}\n# Date: ${new Date().toLocaleDateString()}\n\nprint("OCR Node note parsed successfully")\nx = [i for i in range(10) if i % 2 == 0]\nprint("Sub-concept coverage established.")\n`;
-      
-      setOcrResult(resultText);
+    try {
+      const reader = new FileReader();
+      reader.readAsDataURL(selectedImage);
+      reader.onloadend = async () => {
+        const base64Data = reader.result;
+        const questionConcept = activeQuestion.concept_nodes 
+          ? activeQuestion.concept_nodes.split(',')[0].trim() 
+          : 'PY_SYNTAX_01';
+          
+        try {
+          const res = await api.sendTelemetry({
+            interaction_type: 'OCR_HANDWRITING',
+            image_base64: base64Data,
+            user_id: user.id,
+            node_id: questionConcept,
+            question_id: activeQuestion.id,
+            metrics: {
+              time_spent_sec: telemetryRef.current.timeSpent || 30,
+              run_count: telemetryRef.current.runCount || 0,
+              backspace_count: telemetryRef.current.backspaceCount || 0,
+              paste_char_count: telemetryRef.current.pasteCharCount || 0,
+              syntax_error_count: telemetryRef.current.syntaxErrorCount || 0,
+              label: 'NORMAL'
+            }
+          });
+
+          if (res.extracted_text) {
+            setOcrResult(res.extracted_text);
+            setOcrResponse(res);
+            triggerToast('Handwritten code processed & evaluated successfully!');
+          } else {
+            setOcrResult('# OCR failed to extract text.\nPlease try with a clearer image.');
+          }
+        } catch (err) {
+          console.error('Failed to process note scan:', err);
+          setOcrResult(`# Scan Error: ${err.message || 'Verification failed.'}`);
+        } finally {
+          setOcrScanning(false);
+        }
+      };
+    } catch (err) {
+      console.error('FileReader error:', err);
+      setOcrResult(`# File Error: ${err.message}`);
       setOcrScanning(false);
-
-      // Submit OCR Telemetry
-      try {
-        await api.sendTelemetry({
-          user_id: user.id,
-          node_id: questionConcept,
-          event_type: 'OCR',
-          success: true,
-          attempts: 1,
-          code_snippet: resultText,
-          behavioral_flags: ['HANDWRITING_OCR_PARSED'],
-          time_spent_seconds: 15
-        });
-      } catch (err) {
-        console.error('Failed to submit OCR telemetry:', err);
-      }
-    }, 2500);
+    }
   };
 
   // Submit Answer & Telemetry payload
@@ -343,7 +365,7 @@ export default function QuestionBankScreen({ user }) {
 
   // Submit Handwriting OCR scan
   const handleSubmitHandwriting = async () => {
-    if (!ocrResult) {
+    if (!ocrResponse) {
       alert('Please process a note scan first.');
       return;
     }
@@ -351,28 +373,42 @@ export default function QuestionBankScreen({ user }) {
     if (timerRef.current) clearInterval(timerRef.current);
 
     try {
-      const conceptNode = activeQuestion.concept_nodes 
-        ? activeQuestion.concept_nodes.split(',')[0].trim() 
-        : 'PY_SYNTAX_01';
+      const isCorrect = ocrResponse.grade_result ? ocrResponse.grade_result.is_correct : true;
+      const targetNode = ocrResponse.bayesian_update ? ocrResponse.bayesian_update.target_node : (activeQuestion.concept_nodes ? activeQuestion.concept_nodes.split(',')[0].trim() : 'PY_SYNTAX_01');
+      const expectedMastery = ocrResponse.bayesian_update ? ocrResponse.bayesian_update.expected_mastery : 0.75;
+      const explanation = ocrResponse.grade_result ? ocrResponse.grade_result.logical_flaw_explanation : null;
+
+      const telemetryUpdates = [
+        {
+          node_id: targetNode,
+          expected_mastery: expectedMastery,
+          behavior_class: 0
+        }
+      ];
+
+      if (ocrResponse.bayesian_update && ocrResponse.bayesian_update.propagations) {
+        ocrResponse.bayesian_update.propagations.forEach(p => {
+          telemetryUpdates.push({
+            node_id: p.source_node,
+            expected_mastery: p.expected_mastery,
+            behavior_class: 0
+          });
+        });
+      }
 
       setSubmitResult({
-        success: true,
-        message: 'Handwritten notes parsed successfully! Cognitive priors updated.',
-        concepts_evaluated: activeQuestion.concept_nodes ? activeQuestion.concept_nodes.split(',').map(c => c.trim()) : [conceptNode],
-        telemetry_updates: [
-          {
-            node_id: conceptNode,
-            expected_mastery: 0.78,
-            behavior_class: 0
-          }
-        ]
+        success: isCorrect,
+        message: isCorrect 
+          ? 'Handwritten code is logically correct! Cognitive mastery updated.' 
+          : `Incorrect: ${explanation || 'Logic breakdown.'}`,
+        concepts_evaluated: [targetNode],
+        telemetry_updates: telemetryUpdates
       });
 
-      triggerToast(`Handwriting OCR telemetry processed for node: ${conceptNode}`);
-      console.log('[Developer Help] Bayesian parameters updated via handwriting telemetry:', conceptNode);
+      triggerToast(`Handwriting evaluation complete: ${isCorrect ? 'SUCCESS' : 'LOGICAL FLAW'}`);
     } catch (err) {
       console.error(err);
-      alert('Failed to submit note.');
+      alert('Failed to submit grading.');
     } finally {
       setSubmitLoading(false);
     }
