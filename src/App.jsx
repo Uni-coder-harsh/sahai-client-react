@@ -11,6 +11,7 @@ import ProfileScreen from './components/ProfileScreen';
 import GuestLandingScreen from './components/GuestLandingScreen';
 import QuestionBankScreen from './components/QuestionBankScreen';
 import DebugConsoleScreen from './components/DebugConsoleScreen';
+import TelemetryConsole from './components/TelemetryConsole';
 
 import { 
   LayoutDashboard, 
@@ -435,6 +436,7 @@ export default function App() {
             {element}
           </main>
         </div>
+        <TelemetryConsole />
       </div>
     );
   };

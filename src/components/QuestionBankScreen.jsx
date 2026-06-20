@@ -184,9 +184,13 @@ export default function QuestionBankScreen({ user }) {
     telemetryRef.current.pasteCharCount += text.length;
   };
 
-  // Run dry run in scratchpad
   const handleDryRun = () => {
     telemetryRef.current.runCount += 1;
+    
+    // Dispatch telemetry compile log
+    window.dispatchEvent(new CustomEvent('telemetry-log', {
+      detail: `📡 Sandbox Compile Triggered. Compiles: ${telemetryRef.current.runCount}`
+    }));
     
     const lines = scratchpadCode.split('\n');
     let hasSyntaxError = false;
