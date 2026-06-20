@@ -14,6 +14,7 @@ import DebugConsoleScreen from './components/DebugConsoleScreen';
 import TelemetryConsole from './components/TelemetryConsole';
 import InstituteDashboardScreen from './components/InstituteDashboardScreen';
 import CognitiveDiagnosticsScreen from './components/CognitiveDiagnosticsScreen';
+import HistoryScreen from './components/HistoryScreen';
 
 import { 
   LayoutDashboard, 
@@ -28,7 +29,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Globe,
-  Activity
+  Activity,
+  History
 } from 'lucide-react';
 import { useLanguage } from './context/LanguageContext';
 
@@ -391,6 +393,15 @@ export default function App() {
             </button>
 
             <button
+              onClick={() => navigate('/history')}
+              className={`nav-link ${activeTab === 'history' ? 'active' : ''}`}
+              style={{ background: 'none', border: 'none', width: '100%', textTransform: 'none', fontFamily: 'inherit', textAlign: 'left' }}
+            >
+              <History size={18} style={{ flexShrink: 0 }} />
+              <span className="nav-text">Study History</span>
+            </button>
+
+            <button
               onClick={() => navigate('/profile')}
               className={`nav-link ${activeTab === 'profile' ? 'active' : ''}`}
               style={{ background: 'none', border: 'none', width: '100%', textTransform: 'none', fontFamily: 'inherit', textAlign: 'left' }}
@@ -480,6 +491,7 @@ export default function App() {
       <Route path="/qbank" element={renderPrivateRoute(<QuestionBankScreen user={user} />)} />
       <Route path="/mesh" element={renderPrivateRoute(<SkillMeshScreen user={user} />)} />
       <Route path="/failures" element={renderPrivateRoute(<FailureReportScreen user={user} />)} />
+      <Route path="/history" element={renderPrivateRoute(<HistoryScreen user={user} />)} />
       <Route path="/profile" element={renderPrivateRoute(<ProfileScreen user={user} onLogout={handleLogout} />)} />
       <Route path="/logs" element={renderPrivateRoute(<DebugConsoleScreen />)} />
 

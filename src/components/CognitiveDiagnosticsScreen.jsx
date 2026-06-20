@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { 
   Sparkles, 
@@ -11,6 +12,7 @@ import {
 import { SkillPassport, MasteryTrajectoryChart, HistoryRepairList } from './InteractiveRepairHub';
 
 export default function CognitiveDiagnosticsScreen({ user }) {
+  const navigate = useNavigate();
   const [cognitiveState, setCognitiveState] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -185,7 +187,7 @@ export default function CognitiveDiagnosticsScreen({ user }) {
                     <HistoryRepairList 
                       history={nodeHistory} 
                       conceptNode={selectedNode} 
-                      onPracticeClick={() => window.location.href = '/qbank'}
+                      onPracticeClick={() => navigate('/qbank')}
                     />
                   </div>
                 </div>
