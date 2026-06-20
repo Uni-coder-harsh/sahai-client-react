@@ -194,84 +194,80 @@ export default function DashboardScreen({ user, onTabChange }) {
         </div>
       </div>
 
-      {/* Dynamic Cognitive Diagnostics & Behavior Audit */}
-      <div className="glass-card" style={{ padding: '24px', marginBottom: '32px', border: '1px solid rgba(99, 102, 241, 0.25)', background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.03) 0%, rgba(10, 10, 15, 0.8) 100%)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
-          <Sparkles size={20} style={{ color: 'var(--primary)' }} />
-          <h2 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0 }}>🧠 Cognitive Diagnostics & Behavior Audit</h2>
-        </div>
-        
-        {practicedConcepts.length === 0 ? (
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: '1.5', margin: 0 }}>
-            <strong>No active telemetry patterns logged yet.</strong> Start solving questions in the <strong>Question Bank</strong> or run code dry runs in the sandbox. The Bayesian engine will compile your keyboard velocity, paste events, and misconception parameters to load diagnostic parameters here.
-          </p>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <div>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: '1.5', margin: '0 0 16px 0' }}>
-                Your cognitive mastery levels are being updated dynamically by the math engine. Below are the registered diagnostics for your active subtopics:
+      {/* Dynamic Cognitive Performance Summary */}
+      {(() => {
+        const sortedByMastery = [...cognitiveState].sort((a, b) => parseFloat(b.expected_mastery) - parseFloat(a.expected_mastery));
+        const bestTopics = sortedByMastery.slice(0, 2);
+        const remainingForWorst = sortedByMastery.filter(
+          node => !bestTopics.some(best => best.node_id === node.node_id)
+        );
+        const worstTopics = remainingForWorst.length > 0
+          ? remainingForWorst.slice(-2).reverse()
+          : [...sortedByMastery].reverse().slice(0, 2);
+
+        return (
+          <div className="glass-card" style={{ padding: '24px', marginBottom: '32px', border: '1px solid rgba(99, 102, 241, 0.25)', background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.03) 0%, rgba(10, 10, 15, 0.8) 100%)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <Sparkles size={20} style={{ color: 'var(--primary)' }} />
+                <h2 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0 }}>🧠 Cognitive Performance Summary</h2>
+              </div>
+              <button 
+                className="btn btn-secondary" 
+                onClick={() => onTabChange('diagnostics')}
+                style={{ height: '36px', padding: '0 16px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px' }}
+              >
+                <span>View Detailed Audit</span>
+                <ArrowRight size={14} />
+              </button>
+            </div>
+            
+            {practicedConcepts.length === 0 ? (
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: '1.5', margin: 0 }}>
+                <strong>No active telemetry patterns logged yet.</strong> Start solving questions in the <strong>Question Bank</strong> or run code dry runs in the sandbox. The Bayesian engine will compile your parameters to load diagnostic parameters here.
               </p>
-              
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
-                {practicedConcepts.map(node => {
-                  const alphaVal = parseFloat(node.alpha);
-                  const betaVal = parseFloat(node.beta);
-                  const isGuessing = (betaVal - Math.floor(betaVal) > 0.05);
-                  
-                  return (
-                    <div key={node.node_id} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-color)', padding: '16px', borderRadius: '12px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                        <span style={{ fontWeight: 700, fontSize: '0.95rem' }}>{node.concept_name}</span>
-                        <span className={`badge ${parseFloat(node.expected_mastery) > 0.6 ? 'badge-success' : parseFloat(node.expected_mastery) > 0.45 ? 'badge-warning' : 'badge-error'}`}>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
+                {/* Strengths Card */}
+                <div style={{ background: 'rgba(16, 185, 129, 0.02)', border: '1px solid rgba(16, 185, 129, 0.15)', padding: '16px', borderRadius: '12px' }}>
+                  <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#10b981', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', marginTop: 0 }}>
+                    <Sparkles size={16} />
+                    <span>Top Mastery Strengths</span>
+                  </h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    {bestTopics.map(node => (
+                      <div key={node.node_id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.01)', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                        <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>{node.concept_name}</span>
+                        <span className="badge badge-success">
                           {(parseFloat(node.expected_mastery) * 100).toFixed(1)}% E[K]
                         </span>
                       </div>
-                      <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)', marginBottom: '8px' }}>
-                        Alpha (Success): {alphaVal.toFixed(3)} | Beta (Failure): {betaVal.toFixed(3)}
+                    ))}
+                  </div>
+                </div>
+
+                {/* Focus Areas Card */}
+                <div style={{ background: 'rgba(239, 68, 68, 0.02)', border: '1px solid rgba(239, 68, 68, 0.15)', padding: '16px', borderRadius: '12px' }}>
+                  <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--error)', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', marginTop: 0 }}>
+                    <AlertTriangle size={16} />
+                    <span>Key Focus Areas</span>
+                  </h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    {worstTopics.map(node => (
+                      <div key={node.node_id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.01)', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                        <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>{node.concept_name}</span>
+                        <span className="badge badge-error">
+                          {(parseFloat(node.expected_mastery) * 100).toFixed(1)}% E[K]
+                        </span>
                       </div>
-                      {betaVal > alphaVal && (
-                        <div style={{ fontSize: '0.75rem', color: 'var(--error)', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <span>⚠️ Foundational gaps / high error rates flagged.</span>
-                        </div>
-                      )}
-                      {isGuessing && (
-                        <div style={{ fontSize: '0.75rem', color: 'var(--warning)', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <span>🔍 Behavioral penalty (plagiarism/guessing/debugging) applied.</span>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-            
-            <div style={{ borderTop: '1px dashed var(--border-color)', paddingTop: '16px' }}>
-              <h4 style={{ fontSize: '0.95rem', fontWeight: 800, marginBottom: '10px', color: 'var(--primary)' }}>⚠️ Why is my mastery score penalized or low?</h4>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', lineHeight: '1.6', margin: '0 0 12px 0' }}>
-                SahAI's telemetry engine parses keystroke logs, paste frequencies, compile delays, and distractor patterns to regulate Bayesian learning rates. Check your behavior compliance guidelines:
-              </p>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px', fontSize: '0.8rem', lineHeight: '1.4' }}>
-                <div style={{ padding: '10px', background: 'rgba(239, 68, 68, 0.03)', border: '1px solid rgba(239, 68, 68, 0.1)', borderRadius: '8px' }}>
-                  <strong style={{ color: 'var(--error)', display: 'block', marginBottom: '4px' }}>Copy-Paste Detection (90% Penalty)</strong>
-                  Pasting large snippets with zero backspaces discounts mastery alpha gains, trapping Expected Mastery at baseline values.
-                </div>
-                <div style={{ padding: '10px', background: 'rgba(245, 158, 11, 0.03)', border: '1px solid rgba(245, 158, 11, 0.1)', borderRadius: '8px' }}>
-                  <strong style={{ color: 'var(--warning)', display: 'block', marginBottom: '4px' }}>Shotgun Debugging (50% Penalty)</strong>
-                  Clicking "Run Code" multiple times in quick succession with tiny edits scales down expected mastery updates.
-                </div>
-                <div style={{ padding: '10px', background: 'rgba(239, 68, 68, 0.03)', border: '1px solid rgba(239, 68, 68, 0.1)', borderRadius: '8px' }}>
-                  <strong style={{ color: 'var(--error)', display: 'block', marginBottom: '4px' }}>Blind Guessing (90% Penalty)</strong>
-                  Clicking multiple options rapidly under 3 seconds per try triggers distractors and registers as random guesses.
-                </div>
-                <div style={{ padding: '10px', background: 'rgba(16, 185, 129, 0.03)', border: '1px solid rgba(16, 185, 129, 0.1)', borderRadius: '8px' }}>
-                  <strong style={{ color: '#10b981', display: 'block', marginBottom: '4px' }}>Asymmetric DAG Ripple Effect</strong>
-                  Failing complex topics (e.g. pointers) automatically propagates negative parameters backwards down the DAG to prerequisites.
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
-        )}
-      </div>
+        );
+      })()}
 
       <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '32px', alignItems: 'start' }}>
         {/* Practice Recommendations */}

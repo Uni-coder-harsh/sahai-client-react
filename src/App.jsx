@@ -13,6 +13,7 @@ import QuestionBankScreen from './components/QuestionBankScreen';
 import DebugConsoleScreen from './components/DebugConsoleScreen';
 import TelemetryConsole from './components/TelemetryConsole';
 import InstituteDashboardScreen from './components/InstituteDashboardScreen';
+import CognitiveDiagnosticsScreen from './components/CognitiveDiagnosticsScreen';
 
 import { 
   LayoutDashboard, 
@@ -26,7 +27,8 @@ import {
   Terminal,
   ChevronLeft,
   ChevronRight,
-  Globe
+  Globe,
+  Activity
 } from 'lucide-react';
 import { useLanguage } from './context/LanguageContext';
 
@@ -351,6 +353,15 @@ export default function App() {
               <LayoutDashboard size={18} style={{ flexShrink: 0 }} />
               <span className="nav-text">Dashboard</span>
             </button>
+
+            <button
+              onClick={() => navigate('/diagnostics')}
+              className={`nav-link ${activeTab === 'diagnostics' ? 'active' : ''}`}
+              style={{ background: 'none', border: 'none', width: '100%', textTransform: 'none', fontFamily: 'inherit', textAlign: 'left' }}
+            >
+              <Activity size={18} style={{ flexShrink: 0 }} />
+              <span className="nav-text">Cognitive Diagnostics</span>
+            </button>
             
             <button
               onClick={() => navigate('/qbank')}
@@ -465,6 +476,7 @@ export default function App() {
 
       {/* Private App Routes */}
       <Route path="/dashboard" element={renderPrivateRoute(<DashboardScreen user={user} onTabChange={(tab) => navigate(`/${tab}`)} />)} />
+      <Route path="/diagnostics" element={renderPrivateRoute(<CognitiveDiagnosticsScreen user={user} />)} />
       <Route path="/qbank" element={renderPrivateRoute(<QuestionBankScreen user={user} />)} />
       <Route path="/mesh" element={renderPrivateRoute(<SkillMeshScreen user={user} />)} />
       <Route path="/failures" element={renderPrivateRoute(<FailureReportScreen user={user} />)} />
