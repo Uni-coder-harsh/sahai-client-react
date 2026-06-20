@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../services/api';
+import { useLanguage } from '../context/LanguageContext';
 import { 
   CheckCircle2, 
   HelpCircle, 
@@ -19,6 +20,7 @@ import {
 } from 'lucide-react';
 
 export default function QuestionBankScreen({ user }) {
+  const { language } = useLanguage();
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -105,7 +107,15 @@ export default function QuestionBankScreen({ user }) {
       runCount: 0,
       backspaceCount: 0,
       pasteCharCount: 0,
-      syntaxErrorCount: 0
+      syntaxErrorCount: 0,
+      
+      // MCQ nuance tracking fields
+      firstOpenTime: Date.now(),
+      timeToFirstAction: null,
+      optionSwitches: 0,
+      lastOptionId: null,
+      minClickInterval: 999999,
+      lastClickTime: null
     };
 
     try {
@@ -134,6 +144,31 @@ export default function QuestionBankScreen({ user }) {
     setQuestionDetails(null);
     setSubmitResult(null);
     fetchQuestions(); // Refresh list to update solved checkmarks
+  };
+
+  // Process MCQ option selections and update telemetry tracking values
+  const handleSelectOption = (optionId) => {
+    setSelectedOptionId(optionId);
+    
+    const now = Date.now();
+    const tel = telemetryRef.current;
+    
+    if (tel.timeToFirstAction === null && tel.firstOpenTime) {
+      tel.timeToFirstAction = (now - tel.firstOpenTime) / 1000.0;
+    }
+    
+    if (tel.lastOptionId !== null && tel.lastOptionId !== optionId) {
+      tel.optionSwitches = (tel.optionSwitches || 0) + 1;
+    }
+    tel.lastOptionId = optionId;
+    
+    if (tel.lastClickTime !== null) {
+      const interval = now - tel.lastClickTime;
+      if (interval < tel.minClickInterval) {
+        tel.minClickInterval = interval;
+      }
+    }
+    tel.lastClickTime = now;
   };
 
   // Keyboard listener on Scratchpad
@@ -302,15 +337,29 @@ export default function QuestionBankScreen({ user }) {
     setSubmitLoading(true);
     if (timerRef.current) clearInterval(timerRef.current);
 
+    const tel = telemetryRef.current;
+    const wordCount = activeQuestion.question_text ? activeQuestion.question_text.split(/\s+/).filter(Boolean).length : 50;
+    const timeToFirst = tel.timeToFirstAction !== null ? tel.timeToFirstAction : (tel.timeSpent || 10.0);
+    const readingVel = wordCount / (timeToFirst || 1.0);
+    const minClickInt = tel.minClickInterval !== 999999 ? tel.minClickInterval : 1000.0;
+
     const telemetryPayload = {
       user_id: user.id,
       question_id: activeQuestion.id,
       option_id: selectedOptionId,
-      time_spent_seconds: telemetryRef.current.timeSpent,
-      run_count: telemetryRef.current.runCount,
-      backspace_count: telemetryRef.current.backspaceCount,
-      paste_char_count: telemetryRef.current.pasteCharCount,
-      syntax_error_count: telemetryRef.current.syntaxErrorCount
+      time_spent_seconds: tel.timeSpent,
+      run_count: tel.runCount,
+      backspace_count: tel.backspaceCount,
+      paste_char_count: tel.pasteCharCount,
+      syntax_error_count: tel.syntaxErrorCount,
+      
+      // MCQ nuance telemetry
+      question_word_count: wordCount,
+      time_to_first_action_sec: timeToFirst,
+      reading_velocity: readingVel,
+      option_switch_count: tel.optionSwitches || 0,
+      minimum_click_interval_ms: minClickInt,
+      network_drop_duration_sec: 0.0
     };
 
     try {
@@ -356,7 +405,9 @@ export default function QuestionBankScreen({ user }) {
       // Show a nice completion screen
       setSubmitResult({
         success: true,
-        message: 'Code compilation telemetry processed successfully! Mastery scores synced.',
+        message: language === 'hi'
+          ? 'कोड संकलन टेलीमेट्री सफलतापूर्वक संसाधित की गई! महारत स्कोर सिंक हो गए।'
+          : 'Code compilation telemetry processed successfully! Mastery scores synced.',
         concepts_evaluated: activeQuestion.concept_nodes ? activeQuestion.concept_nodes.split(',').map(c => c.trim()) : [conceptNode],
         telemetry_updates: [
           {
@@ -410,11 +461,17 @@ export default function QuestionBankScreen({ user }) {
         });
       }
 
+      const successMsg = language === 'hi'
+        ? 'हस्तलिखित कोड तार्किक रूप से सही है! संज्ञानात्मक महारत को अपडेट कर दिया गया है।'
+        : 'Handwritten code is logically correct! Cognitive mastery updated.';
+        
+      const failMsg = language === 'hi'
+        ? `अशुद्ध: ${explanation || 'तार्किक विफलता।'}`
+        : `Incorrect: ${explanation || 'Logic breakdown.'}`;
+
       setSubmitResult({
         success: isCorrect,
-        message: isCorrect 
-          ? 'Handwritten code is logically correct! Cognitive mastery updated.' 
-          : `Incorrect: ${explanation || 'Logic breakdown.'}`,
+        message: isCorrect ? successMsg : failMsg,
         concepts_evaluated: [targetNode],
         telemetry_updates: telemetryUpdates
       });
@@ -783,6 +840,9 @@ export default function QuestionBankScreen({ user }) {
                               {(up.behavior_class === 0 || up.behavior_class === '0') && <span style={{ color: 'var(--success)' }}>Normal interaction patterns verified. Full rewards applied.</span>}
                               {(up.behavior_class === 1 || up.behavior_class === '1') && <span style={{ color: 'var(--warning)' }}>Shotgun Debugging pattern flagged. Updates penalized (50%).</span>}
                               {(up.behavior_class === 2 || up.behavior_class === '2') && <span style={{ color: 'var(--error)' }}>Copy-Paste pattern flagged. Mastery reward discounted (90%).</span>}
+                              {(up.behavior_class === 3 || up.behavior_class === '3') && <span style={{ color: 'var(--warning)' }}>Blind Guessing pattern flagged. Mastery updates penalized (90%).</span>}
+                              {(up.behavior_class === 4 || up.behavior_class === '4') && <span style={{ color: 'var(--warning)' }}>Foundational Void flagged. Revision of prerequisites recommended.</span>}
+                              {(up.behavior_class === 5 || up.behavior_class === '5') && <span style={{ color: 'var(--warning)' }}>Anxious Overworking / Accidental Misclick pattern flagged. Mastery adjusted.</span>}
                               {up.behavior_class === undefined && <span style={{ color: 'var(--text-muted)' }}>Interactive telemetry verified.</span>}
                             </div>
 
@@ -842,7 +902,7 @@ export default function QuestionBankScreen({ user }) {
                                   name="mcq_option" 
                                   value={opt.id}
                                   checked={selectedOptionId === opt.id}
-                                  onChange={() => setSelectedOptionId(opt.id)}
+                                  onChange={() => handleSelectOption(opt.id)}
                                   style={{ width: '18px', height: '18px', accentColor: 'var(--primary)' }}
                                 />
                                 <div style={{ display: 'flex', gap: '8px' }}>
