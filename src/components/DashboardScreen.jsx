@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
-import { BookOpen, TrendingUp, AlertTriangle, Play, HelpCircle, Check, X, ArrowRight, Target } from 'lucide-react';
+import { BookOpen, TrendingUp, AlertTriangle, Play, HelpCircle, Check, X, ArrowRight, Target, Sparkles } from 'lucide-react';
 
 export default function DashboardScreen({ user, onTabChange }) {
   const [cognitiveState, setCognitiveState] = useState([]);
