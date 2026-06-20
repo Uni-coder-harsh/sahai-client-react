@@ -9,7 +9,8 @@ import {
   TrendingUp,
   Award,
   Terminal,
-  BookOpen
+  BookOpen,
+  Network
 } from 'lucide-react';
 
 export default function CognitiveDiagnosticsScreen({ user }) {
