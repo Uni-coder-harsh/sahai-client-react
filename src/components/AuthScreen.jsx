@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
-import { LogIn, UserPlus, Info, ShieldAlert } from 'lucide-react';
+import { LogIn, UserPlus, Info, ShieldAlert, ArrowLeft } from 'lucide-react';
 
 export default function AuthScreen({ onAuthSuccess }) {
+  const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -66,8 +68,32 @@ export default function AuthScreen({ onAuthSuccess }) {
 
   return (
     <div className="auth-bg">
-      <div className="glass-card auth-card animate-fade-in">
-        <div className="glass-card-header" style={{ textAlign: 'center' }}>
+      <div className="glass-card auth-card animate-fade-in" style={{ position: 'relative' }}>
+        <button 
+          onClick={() => navigate('/')} 
+          style={{
+            position: 'absolute',
+            top: '20px',
+            left: '20px',
+            background: 'none',
+            border: 'none',
+            color: 'var(--text-secondary)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            fontSize: '0.85rem',
+            cursor: 'pointer',
+            fontWeight: 700,
+            transition: 'color 0.2s'
+          }}
+          onMouseEnter={(e) => e.target.style.color = '#00F0FF'}
+          onMouseLeave={(e) => e.target.style.color = 'var(--text-secondary)'}
+        >
+          <ArrowLeft size={16} />
+          <span>Back to Home</span>
+        </button>
+
+        <div className="glass-card-header" style={{ textAlign: 'center', marginTop: '24px' }}>
           <h1 style={{ fontSize: '2.5rem', fontWeight: 800, letterSpacing: '-0.03em', background: 'linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: '8px' }}>
             SahAI
           </h1>

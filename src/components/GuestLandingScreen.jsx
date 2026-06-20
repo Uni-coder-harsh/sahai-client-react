@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Sparkles, 
@@ -16,6 +16,29 @@ import {
 
 export default function GuestLandingScreen() {
   const navigate = useNavigate();
+
+  const [simAlpha, setSimAlpha] = useState(2.0);
+  const [simBeta, setSimBeta] = useState(2.0);
+  const [simBehavior, setSimBehavior] = useState('NORMAL');
+  
+  const simMastery = simAlpha / (simAlpha + simBeta);
+
+  const simulateAction = (type) => {
+    if (type === 'CORRECT') {
+      setSimAlpha(prev => prev + 1.0);
+      setSimBehavior('NORMAL');
+    } else if (type === 'WRONG') {
+      setSimBeta(prev => prev + 1.0);
+      setSimBehavior('NORMAL');
+    } else if (type === 'COPY_PASTE') {
+      setSimBeta(prev => prev + 1.0);
+      setSimBehavior('COPY_PASTE_DEPENDENCY');
+    } else if (type === 'RESET') {
+      setSimAlpha(2.0);
+      setSimBeta(2.0);
+      setSimBehavior('NORMAL');
+    }
+  };
 
   return (
     <div className="landing-container" style={{ minHeight: '100vh', background: 'var(--bg-dark)', color: 'var(--text-primary)', fontFamily: 'var(--font-sans)', overflowX: 'hidden' }}>
@@ -243,44 +266,81 @@ export default function GuestLandingScreen() {
             </div>
           </div>
 
-          {/* Interactive Flow visualizer */}
-          <div className="glass-card" style={{ padding: '36px', background: 'linear-gradient(135deg, rgba(30, 27, 75, 0.4) 0%, rgba(15, 23, 42, 0.4) 100%)', border: '1px solid rgba(99, 102, 241, 0.2)' }}>
+          {/* Interactive Cognitive Simulator */}
+          <div className="glass-card" style={{ padding: '36px', background: 'linear-gradient(135deg, rgba(30, 27, 75, 0.4) 0%, rgba(15, 23, 42, 0.4) 100%)', border: '1px solid rgba(99, 102, 241, 0.2)', color: '#fff' }}>
             <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <BookOpen size={20} style={{ color: 'var(--primary)' }} />
-              <span>Real-Time Bayesian Parameters</span>
+              <span>Interactive Cognitive Simulator</span>
             </h3>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '16px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '8px' }}>
-                  <span>EVALUATION TARGET</span>
-                  <span>Variables & Pointers</span>
+                  <span>SIMULATED CONCEPT</span>
+                  <span>Control Flow Loops</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.1rem', fontWeight: 700 }}>
-                  <span style={{ color: 'var(--text-primary)' }}>Expected Mastery E[K]</span>
-                  <span style={{ color: 'var(--warning)' }}>50.0% → 41.2%</span>
+                
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <span style={{ fontSize: '1rem', color: '#fff', fontWeight: 700 }}>Expected Mastery E[K]</span>
+                  <span style={{ fontSize: '1.35rem', fontWeight: 900, color: 'var(--primary)', filter: 'drop-shadow(0 0 5px var(--primary))' }}>
+                    {(simMastery * 100).toFixed(1)}%
+                  </span>
                 </div>
-                <div style={{ fontSize: '0.8rem', color: 'var(--error)', marginTop: '4px' }}>
-                  Updated params: α = 2.0, β = 2.85 (+0.85 penalty)
+
+                <div style={{ width: '100%', height: '8px', background: 'rgba(255,255,255,0.05)', borderRadius: '4px', overflow: 'hidden', marginBottom: '12px' }}>
+                  <div style={{ width: `${simMastery * 100}%`, height: '100%', background: 'linear-gradient(90deg, var(--primary), var(--secondary))', borderRadius: '4px', transition: 'width 0.3s ease' }} />
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>
+                  <span>Alphas (Success): {simAlpha.toFixed(1)}</span>
+                  <span>Betas (Failure): {simBeta.toFixed(1)}</span>
                 </div>
               </div>
 
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '8px' }}>
-                  <span>DAG PROPAGATED EDGE</span>
-                  <span>Basic Indentation (W_diag = 0.65)</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.1rem', fontWeight: 700 }}>
-                  <span style={{ color: 'var(--text-primary)' }}>Prerequisite Mastery E[K]</span>
-                  <span style={{ color: 'var(--warning)' }}>50.0% → 43.9%</span>
-                </div>
-                <div style={{ fontSize: '0.8rem', color: 'var(--error)', marginTop: '4px' }}>
-                  Propagated penalty to parent: β = 2.55 (+0.55 penalty)
-                </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,0.2)', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>Detected Behavior:</span>
+                <span style={{ 
+                  fontSize: '0.8rem', 
+                  fontWeight: 800, 
+                  color: simBehavior === 'COPY_PASTE_DEPENDENCY' ? '#ef4444' : '#10b981',
+                  background: simBehavior === 'COPY_PASTE_DEPENDENCY' ? 'rgba(239,68,68,0.1)' : 'rgba(16,185,129,0.1)',
+                  padding: '2px 8px',
+                  borderRadius: '4px',
+                  border: simBehavior === 'COPY_PASTE_DEPENDENCY' ? '1px solid rgba(239,68,68,0.2)' : '1px solid rgba(16,185,129,0.2)'
+                }}>
+                  {simBehavior}
+                </span>
               </div>
 
-              <div style={{ background: 'rgba(16, 185, 129, 0.05)', border: '1px solid rgba(16, 185, 129, 0.2)', padding: '16px', borderRadius: '8px', fontSize: '0.85rem', color: '#6ee7b7' }}>
-                <strong>Zero-Cold Start:</strong> Bayesian graphs adapt student profiles within sub-milliseconds using local updates without needing expensive network execution pipelines.
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '8px' }}>
+                <button 
+                  onClick={() => simulateAction('CORRECT')} 
+                  className="btn btn-secondary" 
+                  style={{ height: '36px', fontSize: '0.78rem', padding: 0, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', borderColor: 'rgba(16,185,129,0.4)', color: '#fff' }}
+                >
+                  + Log Success
+                </button>
+                <button 
+                  onClick={() => simulateAction('WRONG')} 
+                  className="btn btn-secondary" 
+                  style={{ height: '36px', fontSize: '0.78rem', padding: 0, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', borderColor: 'rgba(239,68,68,0.4)', color: '#fff' }}
+                >
+                  + Log Incorrect
+                </button>
+                <button 
+                  onClick={() => simulateAction('COPY_PASTE')} 
+                  className="btn btn-secondary" 
+                  style={{ height: '36px', fontSize: '0.78rem', padding: 0, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', borderColor: 'rgba(245,158,11,0.4)', color: '#fff' }}
+                >
+                  Flag Plagiarism
+                </button>
+                <button 
+                  onClick={() => simulateAction('RESET')} 
+                  className="btn btn-secondary" 
+                  style={{ height: '36px', fontSize: '0.78rem', padding: 0, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}
+                >
+                  Reset Prior
+                </button>
               </div>
             </div>
           </div>

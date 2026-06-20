@@ -312,6 +312,10 @@ class ApiService {
     return this._request(`/questions/history?user_id=${userId}`);
   }
 
+  async fetchStudentNodeHistory(userId, nodeId) {
+    return this._request(`/dashboard/student/${userId}/${nodeId}`);
+  }
+
   async sendTelemetry(payload) {
     const cleanPayload = { ...payload };
     delete cleanPayload.user_id; // DPDP Compliance: NEVER pass user_id in payload body

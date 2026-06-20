@@ -16,8 +16,10 @@ import {
   Lock,
   ChevronRight,
   Upload,
-  Image
+  Image,
+  Sparkles
 } from 'lucide-react';
+import AIInsightCard from './AIInsightCard';
 
 export default function QuestionBankScreen({ user }) {
   const { language } = useLanguage();
@@ -477,7 +479,8 @@ export default function QuestionBankScreen({ user }) {
         success: isCorrect,
         message: isCorrect ? successMsg : failMsg,
         concepts_evaluated: [targetNode],
-        telemetry_updates: telemetryUpdates
+        telemetry_updates: telemetryUpdates,
+        tutor_feedback: ocrResponse.tutor_feedback
       });
 
       triggerToast(`Handwriting evaluation complete: ${isCorrect ? 'SUCCESS' : 'LOGICAL FLAW'}`);
@@ -820,6 +823,10 @@ export default function QuestionBankScreen({ user }) {
                         {submitResult.success ? 'Great job! Prerequisite node values updated successfully.' : 'No worries, analyze the distraction audit triggers to learn.'}
                       </p>
                     </div>
+
+                    {!submitResult.success && submitResult.tutor_feedback && (
+                      <AIInsightCard feedback={submitResult.tutor_feedback} />
+                    )}
 
                     {/* Telemetry Updates */}
                     <div className="glass-card" style={{ padding: '20px', background: 'rgba(0,0,0,0.3)', textAlign: 'left' }}>

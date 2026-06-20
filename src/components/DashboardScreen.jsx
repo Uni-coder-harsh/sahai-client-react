@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import { BookOpen, TrendingUp, AlertTriangle, Play, HelpCircle, Check, X, ArrowRight, Target, Sparkles } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
+import AIInsightCard from './AIInsightCard';
 
 export default function DashboardScreen({ user, onTabChange }) {
   const [cognitiveState, setCognitiveState] = useState([]);
@@ -442,6 +444,12 @@ export default function DashboardScreen({ user, onTabChange }) {
                   <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', marginBottom: '24px' }}>
                     {submissionResult.message || (submissionResult.success ? 'Your mathematical mastery scores have improved!' : 'Your belief states have updated.')}
                   </p>
+
+                  {!submissionResult.success && submissionResult.tutor_feedback && (
+                    <div style={{ display: 'flex', justifyContent: 'center' }}>
+                      <AIInsightCard feedback={submissionResult.tutor_feedback} />
+                    </div>
+                  )}
 
                   <div style={{ textAlign: 'left', background: 'rgba(255,255,255,0.02)', padding: '20px', borderRadius: '12px', border: '1px solid var(--border-color)', marginBottom: '24px' }}>
                     <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px' }}>Inference Updates</h4>
