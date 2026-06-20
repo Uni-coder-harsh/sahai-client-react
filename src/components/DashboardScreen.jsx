@@ -122,9 +122,12 @@ export default function DashboardScreen({ user, onTabChange }) {
 
   // Calculate Aggregates
   const totalConcepts = cognitiveState.length;
-  const avgMastery = totalConcepts > 0 
-    ? (cognitiveState.reduce((sum, n) => sum + parseFloat(n.expected_mastery), 0) / totalConcepts) * 100
-    : 0;
+  const practicedConcepts = cognitiveState.filter(n => n.last_practiced !== null);
+  const avgMastery = practicedConcepts.length > 0 
+    ? (practicedConcepts.reduce((sum, n) => sum + parseFloat(n.expected_mastery), 0) / practicedConcepts.length) * 100
+    : totalConcepts > 0 
+      ? (cognitiveState.reduce((sum, n) => sum + parseFloat(n.expected_mastery), 0) / totalConcepts) * 100
+      : 0;
 
   // Filter Weakest Concepts (mastery < 0.45 or lowest 5 nodes)
   const weakNodes = [...cognitiveState]

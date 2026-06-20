@@ -12,6 +12,7 @@ import GuestLandingScreen from './components/GuestLandingScreen';
 import QuestionBankScreen from './components/QuestionBankScreen';
 import DebugConsoleScreen from './components/DebugConsoleScreen';
 import TelemetryConsole from './components/TelemetryConsole';
+import InstituteDashboardScreen from './components/InstituteDashboardScreen';
 
 import { 
   LayoutDashboard, 
@@ -447,6 +448,7 @@ export default function App() {
       <Route path="/" element={renderGuestRoute(<GuestLandingScreen />)} />
       <Route path="/login" element={renderGuestRoute(<AuthScreen onAuthSuccess={handleAuthSuccess} />)} />
       <Route path="/signup" element={renderGuestRoute(<AuthScreen onAuthSuccess={handleAuthSuccess} />)} />
+      <Route path="/institute/dashboard" element={<InstituteDashboardScreen />} />
       
       {/* Onboarding gates */}
       <Route path="/personalize" element={user && needsPersonalization ? (
