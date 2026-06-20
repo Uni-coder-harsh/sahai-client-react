@@ -70,6 +70,7 @@ export const addDebugLog = (type, message, details = null) => {
 class ApiService {
   constructor() {
     this.token = localStorage.getItem('auth_token') || null;
+    this.language = localStorage.getItem('app_language') || 'en';
   }
 
   setToken(token) {
@@ -81,9 +82,15 @@ class ApiService {
     }
   }
 
+  setLanguage(lang) {
+    this.language = lang;
+    localStorage.setItem('app_language', lang);
+  }
+
   get headers() {
     const headers = {
       'Content-Type': 'application/json',
+      'X-App-Language': this.language || 'en'
     };
     if (this.token) {
       headers['Authorization'] = `Bearer ${this.token}`;

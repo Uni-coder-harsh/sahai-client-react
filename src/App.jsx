@@ -23,8 +23,66 @@ import {
   BookOpen,
   Terminal,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Globe
 } from 'lucide-react';
+import { useLanguage } from './context/LanguageContext';
+
+function LanguageToggle() {
+  const { language, changeLanguage } = useLanguage();
+  
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <Globe size={16} style={{ color: 'var(--primary)' }} />
+      <div style={{ 
+        display: 'flex', 
+        background: 'rgba(255, 255, 255, 0.05)', 
+        border: '1px solid var(--border-color)', 
+        borderRadius: '20px', 
+        padding: '2px', 
+        position: 'relative' 
+      }}>
+        <button
+          onClick={() => changeLanguage('en')}
+          style={{
+            padding: '4px 12px',
+            fontSize: '0.8rem',
+            fontWeight: 700,
+            borderRadius: '16px',
+            border: 'none',
+            cursor: 'pointer',
+            background: language === 'en' ? 'var(--primary)' : 'transparent',
+            color: language === 'en' ? '#fff' : 'var(--text-secondary)',
+            transition: 'all 0.2s ease',
+            zIndex: 1,
+            boxShadow: language === 'en' ? '0 2px 8px rgba(0, 240, 255, 0.3)' : 'none'
+          }}
+        >
+          EN
+        </button>
+        <button
+          onClick={() => changeLanguage('hi')}
+          style={{
+            padding: '4px 12px',
+            fontSize: '0.8rem',
+            fontWeight: 700,
+            borderRadius: '16px',
+            border: 'none',
+            cursor: 'pointer',
+            background: language === 'hi' ? 'var(--primary)' : 'transparent',
+            color: language === 'hi' ? '#fff' : 'var(--text-secondary)',
+            transition: 'all 0.2s ease',
+            zIndex: 1,
+            boxShadow: language === 'hi' ? '0 2px 8px rgba(0, 240, 255, 0.3)' : 'none'
+          }}
+        >
+          HI
+        </button>
+      </div>
+    </div>
+  );
+}
+
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -351,10 +409,32 @@ export default function App() {
           </div>
         </aside>
 
-        {/* Main Workspace Contents */}
-        <main className="main-content">
-          {element}
-        </main>
+        {/* Main Workspace Contents wrapped in layout with global Top Bar */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
+          <header style={{ 
+            display: 'flex', 
+            justifyContent: 'flex-end', 
+            alignItems: 'center', 
+            padding: '16px 40px', 
+            borderBottom: '1px solid var(--border-color)', 
+            background: 'rgba(10, 10, 12, 0.4)', 
+            backdropFilter: 'blur(20px)',
+            flexShrink: 0
+          }}>
+            <LanguageToggle />
+          </header>
+          
+          <main className="main-content" style={{ 
+            flex: 1, 
+            overflowY: 'auto', 
+            padding: '30px 40px', 
+            width: '100%', 
+            margin: '0 auto', 
+            maxWidth: '1400px'
+          }}>
+            {element}
+          </main>
+        </div>
       </div>
     );
   };
