@@ -94,10 +94,10 @@ export default function InstituteDashboardScreen() {
           </button>
           <div>
             <h1 style={{ fontSize: '1.8rem', fontWeight: 800, background: 'linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-              Central University of Kerala
+              Central University of Karnataka
             </h1>
             <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
-              WORKSPACE: HEAD OF DEPARTMENT (CSE) | DR. ARADHANA SEN
+              WORKSPACE: HEAD OF DEPARTMENT (Maths) | Prof. G.J. Reddy
             </span>
           </div>
         </div>
