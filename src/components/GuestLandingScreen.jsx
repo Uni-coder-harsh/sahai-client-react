@@ -215,7 +215,7 @@ export default function GuestLandingScreen() {
 
       {/* Keystroke Telemetry & Code Audits */}
       <section style={{ padding: '80px 8%', background: 'rgba(255,255,255,0.01)', borderTop: '1px solid var(--border-color)' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '60px', alignItems: 'center' }}>
+        <div className="responsive-grid-1-1" style={{ maxWidth: '1200px', margin: '0 auto', gap: '60px', alignItems: 'center' }}>
           <div>
             <div className="badge badge-accent" style={{ marginBottom: '16px' }}>ML Telemetry Engine</div>
             <h2 style={{ fontSize: '2.4rem', fontWeight: 800, lineHeight: 1.2, marginBottom: '20px' }}>

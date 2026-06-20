@@ -269,7 +269,7 @@ export default function DashboardScreen({ user, onTabChange }) {
         );
       })()}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '32px', alignItems: 'start' }}>
+      <div className="responsive-grid-12-1">
         {/* Practice Recommendations */}
         <div className="glass-card">
           <div className="glass-card-header" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

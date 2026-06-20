@@ -202,7 +202,7 @@ export default function SandboxScreen({ user }) {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '240px 1fr', gap: '24px', alignItems: 'start' }}>
+      <div className="responsive-grid-240-1">
         {/* Concepts Picker Sidebar */}
         <div className="glass-card" style={{ padding: '16px', maxHeight: '550px', overflowY: 'auto' }}>
           <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '12px', letterSpacing: '0.05em' }}>Practiced Concept</h4>

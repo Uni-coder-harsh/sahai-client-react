@@ -149,7 +149,7 @@ export default function InstituteDashboardScreen() {
       </div>
 
       {/* Main Dashboard Layout Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '40px' }}>
+      <div className="responsive-grid-12-1" style={{ gap: '40px' }}>
         
         {/* Left Side: Pending Approvals & Security logic card */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>

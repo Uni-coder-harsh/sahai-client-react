@@ -152,7 +152,7 @@ export default function SkillMeshScreen({ user }) {
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '2.5fr 1fr', gap: '24px', alignItems: 'start' }}>
+      <div className="responsive-grid-25-1">
         {/* SVG Skill Mesh Canvas */}
         <div className="skill-mesh-container">
           <svg viewBox={`0 0 ${width} ${height}`} width="100%" height="100%">

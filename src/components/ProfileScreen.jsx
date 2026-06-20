@@ -222,7 +222,7 @@ export default function ProfileScreen({ user, onLogout }) {
 
       {/* Main Profile Layout */}
       <form onSubmit={handleUpdateProfile}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '24px', alignItems: 'start' }}>
+        <div className="responsive-grid-1-2">
           
           {/* LEFT COLUMN: Avatar & Custom Photo Selection */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
