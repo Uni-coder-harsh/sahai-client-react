@@ -20,9 +20,11 @@ import {
   Sparkles
 } from 'lucide-react';
 import AIInsightCard from './AIInsightCard';
+import Editor from '@monaco-editor/react';
 
 export default function QuestionBankScreen({ user }) {
   const { language } = useLanguage();
+  const editorRef = useRef(null);
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -778,9 +780,9 @@ export default function QuestionBankScreen({ user }) {
 
       {/* Solver Modal Overlay */}
       {activeQuestion && (
-        <div style={{ position: 'fixed', top: '0', left: '0', right: '0', bottom: '0', background: 'rgba(0,0,0,0.85)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px' }}>
+        <div className="solver-modal-overlay">
           
-          <div className="glass-card animate-fade-in" style={{ width: '100%', maxWidth: '1200px', height: '100%', display: 'flex', flexDirection: 'column', padding: '0', overflow: 'hidden' }}>
+          <div className="solver-modal-content">
             
             {/* Modal Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 24px', borderBottom: '1px solid var(--border-color)', background: 'rgba(255,255,255,0.02)' }}>
@@ -805,11 +807,11 @@ export default function QuestionBankScreen({ user }) {
             </div>
 
             {/* Modal Content Layout */}
-            <div style={{ display: 'flex', flex: '1', overflow: 'hidden' }}>
+            <div className="solver-grid">
               
               {submitResult ? (
                 // SUBMIT RESULT SCREEN (FULL WIDTH)
-                <div style={{ flex: '1', padding: '40px', overflowY: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                <div className="custom-scrollbar" style={{ flex: '1', padding: '40px', overflowY: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                   <div style={{ width: '100%', maxWidth: '600px', display: 'flex', flexDirection: 'column', gap: '24px', textAlign: 'center' }}>
                     <div style={{ margin: '0 auto', width: '64px', height: '64px', borderRadius: '50%', background: submitResult.success ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)', color: submitResult.success ? 'var(--success)' : 'var(--error)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       {submitResult.success ? <CheckCircle2 size={36} /> : <AlertCircle size={36} />}
@@ -878,10 +880,10 @@ export default function QuestionBankScreen({ user }) {
                 // SOLVER LAYOUT
                 <>
                   {/* Left Panel: Question description + Option picker (MCQ) */}
-                  <div style={{ flex: questionType === 'mcq' ? '1' : '1.1', padding: '24px', overflowY: 'hidden', borderRight: questionType === 'mcq' ? 'none' : '1px solid var(--border-color)', display: 'flex', flexDirection: 'column' }}>
+                  <div className="solver-panel-left" style={{ display: 'flex', flexDirection: 'column', flex: questionType === 'mcq' ? '1' : undefined, borderRight: questionType === 'mcq' ? 'none' : undefined }}>
                     
                     {/* Scrollable Question details & Options */}
-                    <div style={{ flex: '1', overflowY: 'auto', marginBottom: '20px', paddingRight: '8px' }}>
+                    <div className="custom-scrollbar" style={{ flex: '1', overflowY: 'auto', marginBottom: '20px', paddingRight: '8px' }}>
                       {/* Question text block */}
                       <div style={{ marginBottom: '24px' }}>
                         <p style={{ fontSize: '1.05rem', lineHeight: 1.6, color: 'var(--text-primary)', whiteSpace: 'pre-wrap', fontWeight: 500 }}>
@@ -961,7 +963,7 @@ export default function QuestionBankScreen({ user }) {
 
                   {/* Right Panel: Dry-Run Scratchpad (Code) OR Note Scanner (Handwriting) */}
                   {questionType !== 'mcq' && (
-                    <div style={{ flex: '1', background: 'rgba(0, 0, 0, 0.4)', display: 'flex', flexDirection: 'column' }}>
+                    <div className="solver-panel-right">
                       
                       {questionType === 'code' ? (
                         /* Code Scratchpad view exclusively */
@@ -981,32 +983,34 @@ export default function QuestionBankScreen({ user }) {
                           </div>
 
                           {/* Scratchpad Editor Area */}
-                          <div style={{ flex: '1', display: 'flex', flexDirection: 'row', position: 'relative', overflowY: 'auto' }}>
-                            <div style={{ width: '40px', padding: '14px 0', borderRight: '1px solid rgba(255,255,255,0.05)', background: 'rgba(0,0,0,0.2)', display: 'flex', flexDirection: 'column', alignItems: 'center', fontSize: '0.8rem', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', userSelect: 'none', lineHeight: '1.5' }}>
-                              {Array.from({ length: scratchpadCode.split('\n').length || 1 }).map((_, i) => (
-                                <span key={i}>{i + 1}</span>
-                              ))}
-                            </div>
-                            
-                            <textarea
+                          <div style={{ flex: '1', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                            <Editor
+                              height="100%"
+                              defaultLanguage="python"
+                              theme="vs-dark"
                               value={scratchpadCode}
-                              onChange={(e) => setScratchpadCode(e.target.value)}
-                              onKeyDown={handleScratchpadKeyDown}
-                              onPaste={handleScratchpadPaste}
-                              disabled={submitLoading}
-                              style={{ 
-                                flex: '1',
-                                background: 'none',
-                                border: 'none',
-                                resize: 'none',
-                                outline: 'none',
-                                color: '#a5b4fc',
-                                fontFamily: 'var(--font-mono)',
-                                fontSize: '0.9rem',
-                                lineHeight: '1.5',
-                                padding: '14px',
-                                height: '100%',
-                                tabSize: '4'
+                              onChange={(val) => setScratchpadCode(val || '')}
+                              onMount={(editor, monaco) => {
+                                editorRef.current = editor;
+                                editor.onDidPaste((e) => {
+                                  const model = editor.getModel();
+                                  if (model) {
+                                    const pastedText = model.getValueInRange(e.range);
+                                    telemetryRef.current.pasteCharCount += (pastedText ? pastedText.length : 0);
+                                  }
+                                });
+                                editor.onKeyDown((e) => {
+                                  if (e.keyCode === monaco.KeyCode.Backspace) {
+                                    telemetryRef.current.backspaceCount += 1;
+                                  }
+                                });
+                              }}
+                              options={{
+                                fontSize: 13,
+                                minimap: { enabled: false },
+                                scrollBeyondLastLine: false,
+                                fontFamily: "'Fira Code', 'Courier New', monospace",
+                                lineNumbersMinChars: 3
                               }}
                             />
                           </div>
@@ -1018,7 +1022,7 @@ export default function QuestionBankScreen({ user }) {
                               <span>Dry Run Output Terminal</span>
                             </div>
                             
-                            <div style={{ flex: '1', padding: '12px 16px', overflowY: 'auto', fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: '#c7d2fe', whiteSpace: 'pre-wrap', lineHeight: 1.4 }}>
+                            <div className="custom-scrollbar" style={{ flex: '1', padding: '12px 16px', overflowY: 'auto', fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: '#c7d2fe', whiteSpace: 'pre-wrap', lineHeight: 1.4 }}>
                               {runLogs.length === 0 ? (
                                 <span style={{ color: 'var(--text-muted)' }}>Click "Run Dry Run" to compile and run code block. Telemetry hooks will record keystroke patterns.</span>
                               ) : (
@@ -1032,9 +1036,9 @@ export default function QuestionBankScreen({ user }) {
                             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                               <span>Telemetry State: ACTIVE</span>
                               <div style={{ display: 'flex', gap: '16px' }}>
-                                <span>Runs: <strong>{telemetryRef.current.runCount}</strong></span>
-                                <span>Backspaces: <strong>{telemetryRef.current.backspaceCount}</strong></span>
-                                <span>Pasted Chars: <strong>{telemetryRef.current.pasteCharCount}</strong></span>
+                                  <span>Runs: <strong>{telemetryRef.current.runCount}</strong></span>
+                                  <span>Backspaces: <strong>{telemetryRef.current.backspaceCount}</strong></span>
+                                  <span>Pasted Chars: <strong>{telemetryRef.current.pasteCharCount}</strong></span>
                               </div>
                             </div>
                             <button
@@ -1049,7 +1053,7 @@ export default function QuestionBankScreen({ user }) {
                         </div>
                       ) : (
                         /* Handwriting Note Scanner view exclusively */
-                        <div style={{ flex: '1', display: 'flex', flexDirection: 'column', padding: '24px', overflowY: 'auto', gap: '20px' }}>
+                        <div className="custom-scrollbar" style={{ flex: '1', display: 'flex', flexDirection: 'column', padding: '24px', overflowY: 'auto', gap: '20px' }}>
                           <div className="glass-card" style={{ padding: '20px', background: 'rgba(255,255,255,0.02)' }}>
                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: '2px dashed var(--border-color)', borderRadius: '12px', padding: '30px 20px', background: 'rgba(0,0,0,0.2)', cursor: 'pointer', position: 'relative', marginBottom: '16px' }}>
                               <input

@@ -710,3 +710,156 @@ body {
   }
 }
 
+/* Responsive Question Solver Modal Layout */
+.solver-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(4, 6, 14, 0.85);
+  backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 24px;
+  box-sizing: border-box;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.solver-modal-content {
+  width: 100%;
+  max-width: 1240px;
+  height: calc(100vh - 48px);
+  background: #060913;
+  border: 1px solid rgba(0, 242, 254, 0.15);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7);
+  animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.solver-grid {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  width: 100%;
+  background: #060913;
+}
+
+.solver-panel-left {
+  flex: 1.1;
+  padding: 28px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid rgba(0, 242, 254, 0.1);
+  background: #090d19;
+}
+
+.solver-panel-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #04060c;
+}
+
+/* Custom Scrollbars for Solver Panels */
+.solver-panel-left::-webkit-scrollbar,
+.solver-panel-right::-webkit-scrollbar,
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.solver-panel-left::-webkit-scrollbar-track,
+.solver-panel-right::-webkit-scrollbar-track,
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.solver-panel-left::-webkit-scrollbar-thumb,
+.solver-panel-right::-webkit-scrollbar-thumb,
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(0, 242, 254, 0.2);
+  border-radius: 3px;
+}
+
+.solver-panel-left::-webkit-scrollbar-thumb:hover,
+.solver-panel-right::-webkit-scrollbar-thumb:hover,
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 242, 254, 0.45);
+}
+
+/* Responsive Overrides for Solver Split View */
+@media (max-width: 992px) {
+  .solver-modal-overlay {
+    padding: 0;
+  }
+  
+  .solver-modal-content {
+    height: 100vh;
+    border-radius: 0;
+    border: none;
+  }
+  
+  .solver-grid {
+    flex-direction: column;
+    overflow-y: auto;
+  }
+  
+  .solver-panel-left {
+    flex: none;
+    border-right: none;
+    border-bottom: 1px solid rgba(0, 242, 254, 0.1);
+    overflow-y: visible;
+    padding: 20px;
+  }
+  
+  .solver-panel-right {
+    flex: none;
+    overflow-y: visible;
+    padding: 20px;
+    height: auto;
+  }
+  
+  .monaco-editor-wrapper {
+    height: 350px !important;
+  }
+}
+
+/* Sandbox editor and telemetry layouts */
+.sandbox-editor-layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 24px;
+}
+
+.telemetry-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 900px) {
+  .sandbox-editor-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .telemetry-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .telemetry-grid {
+    grid-template-columns: 1fr;
+  }
+}
+

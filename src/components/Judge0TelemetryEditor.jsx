@@ -208,7 +208,7 @@ export default function Judge0TelemetryEditor({ user }) {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: '24px' }}>
+      <div className="sandbox-editor-layout">
         {/* Concepts Picker Sidebar */}
         <div style={{ background: '#0d1527', border: '1px solid rgba(0, 242, 254, 0.15)', borderRadius: '12px', padding: '16px', height: 'fit-content' }}>
           <h4 style={{ fontSize: '0.8rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', marginBottom: '16px', letterSpacing: '0.05em' }}>Target Concepts</h4>
@@ -241,7 +241,7 @@ export default function Judge0TelemetryEditor({ user }) {
         {/* Editor & Console Panel */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           {/* Live Telemetry Monitors (Dark Analytics Dashboard) */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
+          <div className="telemetry-grid">
             <div style={{ background: '#0d1527', border: '1px solid rgba(0, 242, 254, 0.1)', padding: '16px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '12px' }}>
               <Timer size={20} style={{ color: '#00f2fe' }} />
               <div>
