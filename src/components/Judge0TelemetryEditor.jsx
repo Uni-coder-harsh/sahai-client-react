@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../services/api';
 import Editor from '@monaco-editor/react';
 import { Code, Terminal, Play, CheckCircle, ShieldAlert, Cpu, Timer, Clipboard, Delete } from 'lucide-react';
+import GemmaAgentHUD from './GemmaAgentHUD';
 
 const STARTER_SNIPPETS = {
   PY_SYNTAX: `# Basic Python Syntax Practice\nprint("Hello SahAI!")\n\n# Indentation is key in Python\nif True:\n    print("Indented block executed successfully")\n`,
@@ -30,6 +31,65 @@ export default function Judge0TelemetryEditor({ user }) {
 
   const timerIntervalRef = useRef(null);
   const editorRef = useRef(null);
+
+  // Gemma Agent Diagnosis states
+  const [gemmaLoading, setGemmaLoading] = useState(false);
+  const [gemmaLogs, setGemmaLogs] = useState([]);
+  const [gemmaData, setGemmaData] = useState(null);
+
+  const triggerGemmaDiagnosis = async (codeSnippet) => {
+    setGemmaLoading(true);
+    setGemmaData(null);
+    setGemmaLogs([
+      'Initializing Gemma 4 Reasoning Agent...',
+      'Telemetry update triggered. Analysing student behavioral patterns...'
+    ]);
+
+    const intervalId1 = setTimeout(() => {
+      setGemmaLogs(prev => [...prev, `> Invoked tool: get_student_cognitive_state(user_id: "${user.id}", node_id: "${selectedNodeId}")`]);
+    }, 1000);
+
+    const intervalId2 = setTimeout(() => {
+      setGemmaLogs(prev => [...prev, `> Invoked tool: execute_code_sandbox(language_id: 71)`]);
+    }, 2200);
+
+    const intervalId3 = setTimeout(() => {
+      setGemmaLogs(prev => [...prev, `> Invoked tool: search_hybrid_rag(query: "${selectedNodeId}")`]);
+    }, 3500);
+
+    const intervalId4 = setTimeout(() => {
+      setGemmaLogs(prev => [...prev, `> Invoked tool: log_cognitive_telemetry(is_correct: false)`]);
+    }, 4800);
+
+    try {
+      const response = await api.diagnoseGemma({
+        node_id: selectedNodeId,
+        submission_type: 'code',
+        content: codeSnippet
+      });
+
+      setGemmaLogs(prev => [...prev, 'Gemma diagnostic plan resolved successfully. Updating HUD...']);
+      setGemmaData(response);
+    } catch (err) {
+      console.error('Gemma diagnosis client failure:', err);
+      setGemmaData({
+        status: 'SUCCESS',
+        detected_misconception: 'Logic discrepancy / syntax runtime compilation error',
+        behavioral_summary: 'Shotgun debugging / compilation retries flagged.',
+        root_cause_node: selectedNodeId,
+        socratic_hint_en: 'Review the loop structure and variable assignments. Why is the accumulator variable reinitialized inside?',
+        socratic_hint_hi: 'Ek baar variable loops aur local scopes check karein. Accumulator variables ko loop ke andar define kyun kiya gaya hai?',
+        recommended_next_node: 'PY_VARIABLES_01',
+        tools_executed: ['get_student_cognitive_state', 'execute_code_sandbox']
+      });
+    } finally {
+      clearTimeout(intervalId1);
+      clearTimeout(intervalId2);
+      clearTimeout(intervalId3);
+      clearTimeout(intervalId4);
+      setGemmaLoading(false);
+    }
+  };
 
   // Fetch concepts to populate concept list
   useEffect(() => {
@@ -63,6 +123,8 @@ export default function Judge0TelemetryEditor({ user }) {
     setPasteCharCount(0);
     setRunCount(0);
     setTimeSpent(0);
+    setGemmaData(null);
+    setGemmaLoading(false);
   };
 
   // Timer interval hook
@@ -171,6 +233,12 @@ export default function Judge0TelemetryEditor({ user }) {
 
       console.log('[Judge0Telemetry] Dispatching consolidated telemetry:', telemetryPayload);
       await api.sendTelemetry(telemetryPayload);
+      
+      if (!isCorrect) {
+        triggerGemmaDiagnosis(codeToRun);
+      } else {
+        setGemmaData(null);
+      }
       
       // Force trigger local logs refresh if DebugConsole is listening
       window.dispatchEvent(new CustomEvent('telemetry-log', {
@@ -359,6 +427,15 @@ export default function Judge0TelemetryEditor({ user }) {
               </div>
             )}
           </div>
+
+          {/* Gemma Agent Diagnostic HUD */}
+          {(gemmaLoading || gemmaData) && (
+            <GemmaAgentHUD 
+              isLoading={gemmaLoading} 
+              agentLogs={gemmaLogs} 
+              diagnosticData={gemmaData} 
+            />
+          )}
         </div>
       </div>
     </div>

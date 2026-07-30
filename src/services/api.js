@@ -363,6 +363,13 @@ class ApiService {
       body: JSON.stringify(encryptedBody),
     });
   }
+
+  async diagnoseGemma(payload) {
+    return this._request('/telemetry/gemma-diagnose', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+  }
 }
 
 export const api = new ApiService();

@@ -16,6 +16,7 @@ import InstituteDashboardScreen from './components/InstituteDashboardScreen';
 import CognitiveDiagnosticsScreen from './components/CognitiveDiagnosticsScreen';
 import HistoryScreen from './components/HistoryScreen';
 import Judge0TelemetryEditor from './components/Judge0TelemetryEditor';
+import MultimodalScanner from './components/MultimodalScanner';
 
 import { 
   LayoutDashboard, 
@@ -31,7 +32,8 @@ import {
   ChevronRight,
   Globe,
   Activity,
-  History
+  History,
+  Eye
 } from 'lucide-react';
 import { useLanguage } from './context/LanguageContext';
 
@@ -385,6 +387,15 @@ export default function App() {
             </button>
 
             <button
+              onClick={() => navigate('/vision')}
+              className={`nav-link ${activeTab === 'vision' ? 'active' : ''}`}
+              style={{ background: 'none', border: 'none', width: '100%', textTransform: 'none', fontFamily: 'inherit', textAlign: 'left' }}
+            >
+              <Eye size={18} style={{ flexShrink: 0 }} />
+              <span className="nav-text">Notes Scanner</span>
+            </button>
+
+            <button
               onClick={() => navigate('/mesh')}
               className={`nav-link ${activeTab === 'mesh' ? 'active' : ''}`}
               style={{ background: 'none', border: 'none', width: '100%', textTransform: 'none', fontFamily: 'inherit', textAlign: 'left' }}
@@ -505,6 +516,7 @@ export default function App() {
       <Route path="/profile" element={renderPrivateRoute(<ProfileScreen user={user} onLogout={handleLogout} />)} />
       <Route path="/logs" element={renderPrivateRoute(<DebugConsoleScreen />)} />
       <Route path="/sandbox" element={renderPrivateRoute(<Judge0TelemetryEditor user={user} />)} />
+      <Route path="/vision" element={renderPrivateRoute(<MultimodalScanner user={user} />)} />
 
       {/* Wildcard Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />
