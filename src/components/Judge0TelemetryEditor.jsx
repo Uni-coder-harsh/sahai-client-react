@@ -37,7 +37,13 @@ export default function Judge0TelemetryEditor({ user }) {
   const [gemmaLogs, setGemmaLogs] = useState([]);
   const [gemmaData, setGemmaData] = useState(null);
 
+  // Bottom Panel layout states
+  const [activeBottomTab, setActiveBottomTab] = useState('console'); // 'console' | 'gemma'
+  const [isBottomExpanded, setIsBottomExpanded] = useState(true);
+
   const triggerGemmaDiagnosis = async (codeSnippet) => {
+    setIsBottomExpanded(true);
+    setActiveBottomTab('gemma');
     setGemmaLoading(true);
     setGemmaData(null);
     setGemmaLogs([
@@ -168,6 +174,8 @@ export default function Judge0TelemetryEditor({ user }) {
     setSubmitStatus(null);
     setRunCount(prev => prev + 1);
     setConsoleLogs('> Enqueuing secure sandbox request...\n> Contacting Judge0 Execution Server...\n');
+    setIsBottomExpanded(true);
+    setActiveBottomTab('console');
 
     try {
       const codeToRun = editorRef.current ? editorRef.current.getValue() : code;
@@ -341,8 +349,17 @@ export default function Judge0TelemetryEditor({ user }) {
           </div>
 
           {/* Monaco Editor Container */}
-          <div style={{ background: '#0d1527', border: '1px solid rgba(0, 242, 254, 0.15)', borderRadius: '12px', overflow: 'hidden' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', background: '#0a0f1d', borderBottom: '1px solid rgba(0, 242, 254, 0.1)' }}>
+          <div style={{
+            background: '#0d1527',
+            border: '1px solid rgba(0, 242, 254, 0.15)',
+            borderRadius: '12px',
+            overflow: 'hidden',
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            minHeight: '280px'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', background: '#0a0f1d', borderBottom: '1px solid rgba(0, 242, 254, 0.1)', flexShrink: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Code size={16} style={{ color: '#00f2fe' }} />
                 <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#cbd5e1', fontFamily: 'monospace' }}>python_editor.py</span>
@@ -372,7 +389,7 @@ export default function Judge0TelemetryEditor({ user }) {
               </button>
             </div>
             
-            <div style={{ height: '350px' }}>
+            <div style={{ flex: 1, minHeight: '150px' }}>
               <Editor
                 height="100%"
                 defaultLanguage="python"
@@ -390,52 +407,144 @@ export default function Judge0TelemetryEditor({ user }) {
             </div>
           </div>
 
-          {/* Console / Compilation Log Panel */}
-          <div style={{ background: '#0d1527', border: '1px solid rgba(0, 242, 254, 0.15)', borderRadius: '12px', padding: '16px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-              <Terminal size={18} style={{ color: '#00f2fe' }} />
-              <h4 style={{ fontSize: '0.9rem', fontWeight: 700, margin: 0 }}>Console Outputs</h4>
-            </div>
-            <pre style={{
-              background: '#04060b',
-              border: '1px solid rgba(0, 242, 254, 0.08)',
-              borderRadius: '8px',
-              padding: '16px',
-              color: '#10b981',
-              fontFamily: 'monospace',
-              fontSize: '0.85rem',
-              minHeight: '120px',
-              maxHeight: '200px',
-              overflowY: 'auto',
-              margin: 0,
-              whiteSpace: 'pre-wrap'
+          {/* Bottom Tabs Drawer Panel (Console Logs & Gemma Insights) */}
+          <div style={{
+            background: '#0d1527',
+            border: '1px solid rgba(0, 242, 254, 0.15)',
+            borderRadius: '12px',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+            height: isBottomExpanded ? '300px' : '48px',
+            transition: 'height 0.25s ease',
+            flexShrink: 0
+          }}>
+            {/* Header & Tabs */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '0 16px',
+              height: '48px',
+              background: '#0a0f1d',
+              borderBottom: '1px solid rgba(0, 242, 254, 0.1)',
+              flexShrink: 0
             }}>
-              {consoleLogs}
-            </pre>
-
-            {/* Ingestion Alerts */}
-            {submitStatus === 'success' && (
-              <div style={{ marginTop: '16px', display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#34d399', padding: '12px', borderRadius: '8px', fontSize: '0.85rem' }}>
-                <CheckCircle size={16} />
-                <span>Test Cases Passed! Ingested telemetry details and updated Bayesian priors successfully.</span>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  onClick={() => {
+                    setActiveBottomTab('console');
+                    setIsBottomExpanded(true);
+                  }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    padding: '8px 16px',
+                    color: activeBottomTab === 'console' ? '#00f2fe' : '#94a3b8',
+                    borderBottom: activeBottomTab === 'console' ? '2px solid #00f2fe' : '2px solid transparent',
+                    cursor: 'pointer',
+                    fontSize: '0.85rem',
+                    fontWeight: 700,
+                    outline: 'none',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  Console Output
+                </button>
+                
+                {(gemmaLoading || gemmaData) && (
+                  <button
+                    onClick={() => {
+                      setActiveBottomTab('gemma');
+                      setIsBottomExpanded(true);
+                    }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      padding: '8px 16px',
+                      color: activeBottomTab === 'gemma' ? '#a855f7' : '#94a3b8',
+                      borderBottom: activeBottomTab === 'gemma' ? '2px solid #a855f7' : '2px solid transparent',
+                      cursor: 'pointer',
+                      fontSize: '0.85rem',
+                      fontWeight: 700,
+                      outline: 'none',
+                      transition: 'all 0.2s',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    <BrainCircuit size={14} />
+                    <span>Gemma Socratic Insights</span>
+                  </button>
+                )}
               </div>
-            )}
-            {submitStatus === 'failure' && (
-              <div style={{ marginTop: '16px', display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#f87171', padding: '12px', borderRadius: '8px', fontSize: '0.85rem' }}>
-                <ShieldAlert size={16} />
-                <span>Execution Failed or Compilation Error. Telemetry dispatched to math engine classifier.</span>
+              
+              {/* Expand / Minimize Toggle */}
+              <button
+                onClick={() => setIsBottomExpanded(!isBottomExpanded)}
+                style={{
+                  background: 'rgba(255,255,255,0.05)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: '4px',
+                  color: '#94a3b8',
+                  padding: '4px 10px',
+                  cursor: 'pointer',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  outline: 'none'
+                }}
+              >
+                {isBottomExpanded ? 'Collapse' : 'Expand'}
+              </button>
+            </div>
+
+            {/* Tab Contents */}
+            {isBottomExpanded && (
+              <div className="custom-scrollbar" style={{ flex: 1, overflowY: 'auto', padding: '16px' }}>
+                {activeBottomTab === 'console' ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                    <pre style={{
+                      background: '#04060b',
+                      border: '1px solid rgba(0, 242, 254, 0.08)',
+                      borderRadius: '8px',
+                      padding: '16px',
+                      color: '#10b981',
+                      fontFamily: 'monospace',
+                      fontSize: '0.85rem',
+                      margin: 0,
+                      whiteSpace: 'pre-wrap',
+                      flex: 1
+                    }}>
+                      {consoleLogs}
+                    </pre>
+
+                    {/* Ingestion Alerts */}
+                    {submitStatus === 'success' && (
+                      <div style={{ marginTop: '16px', display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#34d399', padding: '12px', borderRadius: '8px', fontSize: '0.85rem' }}>
+                        <CheckCircle size={16} />
+                        <span>Test Cases Passed! Ingested telemetry details and updated priors.</span>
+                      </div>
+                    )}
+                    {submitStatus === 'failure' && (
+                      <div style={{ marginTop: '16px', display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#f87171', padding: '12px', borderRadius: '8px', fontSize: '0.85rem' }}>
+                        <ShieldAlert size={16} />
+                        <span>Execution Failed. Telemetry logged.</span>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div style={{ marginTop: '-24px' }}>
+                    <GemmaAgentHUD 
+                      isLoading={gemmaLoading} 
+                      agentLogs={gemmaLogs} 
+                      diagnosticData={gemmaData} 
+                    />
+                  </div>
+                )}
               </div>
             )}
           </div>
-
-          {/* Gemma Agent Diagnostic HUD */}
-          {(gemmaLoading || gemmaData) && (
-            <GemmaAgentHUD 
-              isLoading={gemmaLoading} 
-              agentLogs={gemmaLogs} 
-              diagnosticData={gemmaData} 
-            />
-          )}
         </div>
       </div>
     </div>

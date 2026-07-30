@@ -873,7 +873,7 @@ body {
   flex-direction: column;
   gap: 20px;
   height: 100%;
-  overflow-y: auto;
+  overflow: hidden;
   padding-right: 8px;
 }
 

@@ -386,14 +386,7 @@ export default function App() {
               <span className="nav-text">Coding Sandbox</span>
             </button>
 
-            <button
-              onClick={() => navigate('/vision')}
-              className={`nav-link ${activeTab === 'vision' ? 'active' : ''}`}
-              style={{ background: 'none', border: 'none', width: '100%', textTransform: 'none', fontFamily: 'inherit', textAlign: 'left' }}
-            >
-              <Eye size={18} style={{ flexShrink: 0 }} />
-              <span className="nav-text">Notes Scanner</span>
-            </button>
+
 
             <button
               onClick={() => navigate('/mesh')}
@@ -516,7 +509,6 @@ export default function App() {
       <Route path="/profile" element={renderPrivateRoute(<ProfileScreen user={user} onLogout={handleLogout} />)} />
       <Route path="/logs" element={renderPrivateRoute(<DebugConsoleScreen />)} />
       <Route path="/sandbox" element={renderPrivateRoute(<Judge0TelemetryEditor user={user} />)} />
-      <Route path="/vision" element={renderPrivateRoute(<MultimodalScanner user={user} />)} />
 
       {/* Wildcard Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />

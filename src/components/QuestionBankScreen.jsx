@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import AIInsightCard from './AIInsightCard';
 import Editor from '@monaco-editor/react';
+import GemmaAgentHUD from './GemmaAgentHUD';
 
 export default function QuestionBankScreen({ user }) {
   const { language } = useLanguage();
@@ -827,7 +828,31 @@ export default function QuestionBankScreen({ user }) {
                     </div>
 
                     {!submitResult.success && submitResult.tutor_feedback && (
-                      <AIInsightCard feedback={submitResult.tutor_feedback} />
+                      <GemmaAgentHUD 
+                        isLoading={false} 
+                        agentLogs={[]} 
+                        diagnosticData={
+                          typeof submitResult.tutor_feedback === 'string'
+                            ? {
+                                status: 'SUCCESS',
+                                detected_misconception: 'Logic discrepancy',
+                                behavioral_summary: 'Analyzed student response telemetry.',
+                                root_cause_node: activeQuestion.concept_nodes ? activeQuestion.concept_nodes.split(',')[0].trim() : 'PY_SYNTAX_01',
+                                socratic_hint_en: submitResult.tutor_feedback,
+                                socratic_hint_hi: submitResult.tutor_feedback,
+                                tools_executed: ['get_student_cognitive_state', 'log_cognitive_telemetry']
+                              }
+                            : {
+                                status: 'SUCCESS',
+                                detected_misconception: submitResult.tutor_feedback?.detected_misconception || 'Logic discrepancy',
+                                behavioral_summary: submitResult.tutor_feedback?.behavioral_summary || 'Analyzed student response telemetry.',
+                                root_cause_node: submitResult.tutor_feedback?.root_cause_node || (activeQuestion.concept_nodes ? activeQuestion.concept_nodes.split(',')[0].trim() : 'PY_SYNTAX_01'),
+                                socratic_hint_en: submitResult.tutor_feedback?.socratic_hint_en || submitResult.tutor_feedback?.en || JSON.stringify(submitResult.tutor_feedback),
+                                socratic_hint_hi: submitResult.tutor_feedback?.socratic_hint_hi || submitResult.tutor_feedback?.hi || JSON.stringify(submitResult.tutor_feedback),
+                                tools_executed: submitResult.tutor_feedback?.tools_executed || ['get_student_cognitive_state', 'log_cognitive_telemetry']
+                              }
+                        } 
+                      />
                     )}
 
                     {/* Telemetry Updates */}
