@@ -191,9 +191,9 @@ export default function Judge0TelemetryEditor({ user }) {
   };
 
   return (
-    <div style={{ padding: '24px', background: '#070a13', color: '#e2e8f0', minHeight: '100vh', fontFamily: "'Outfit', sans-serif" }}>
+    <div className="sandbox-root" style={{ color: '#e2e8f0', fontFamily: "'Outfit', sans-serif" }}>
       {/* Upper Title Area */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', borderBottom: '1px solid rgba(0, 242, 254, 0.15)', paddingBottom: '16px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', borderBottom: '1px solid rgba(0, 242, 254, 0.15)', paddingBottom: '16px', flexShrink: 0 }}>
         <div>
           <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: '#00f2fe', letterSpacing: '0.1em', fontWeight: 700 }}>Telemetry Sandbox</span>
           <h2 style={{ fontSize: '1.75rem', fontWeight: 800, margin: '4px 0 0 0', background: 'linear-gradient(to right, #00f2fe, #14b8a6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
@@ -210,9 +210,9 @@ export default function Judge0TelemetryEditor({ user }) {
 
       <div className="sandbox-editor-layout">
         {/* Concepts Picker Sidebar */}
-        <div style={{ background: '#0d1527', border: '1px solid rgba(0, 242, 254, 0.15)', borderRadius: '12px', padding: '16px', height: 'fit-content' }}>
-          <h4 style={{ fontSize: '0.8rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', marginBottom: '16px', letterSpacing: '0.05em' }}>Target Concepts</h4>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+        <div className="sandbox-sidebar">
+          <h4 style={{ fontSize: '0.8rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', marginBottom: '16px', letterSpacing: '0.05em', flexShrink: 0 }}>Target Concepts</h4>
+          <div className="sandbox-sidebar-list custom-scrollbar">
             {concepts.map((concept) => (
               <button
                 key={concept.node_id}
@@ -239,7 +239,7 @@ export default function Judge0TelemetryEditor({ user }) {
         </div>
 
         {/* Editor & Console Panel */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div className="sandbox-main-area custom-scrollbar">
           {/* Live Telemetry Monitors (Dark Analytics Dashboard) */}
           <div className="telemetry-grid">
             <div style={{ background: '#0d1527', border: '1px solid rgba(0, 242, 254, 0.1)', padding: '16px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '12px' }}>
