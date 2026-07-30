@@ -15,6 +15,7 @@ import TelemetryConsole from './components/TelemetryConsole';
 import InstituteDashboardScreen from './components/InstituteDashboardScreen';
 import CognitiveDiagnosticsScreen from './components/CognitiveDiagnosticsScreen';
 import HistoryScreen from './components/HistoryScreen';
+import Judge0TelemetryEditor from './components/Judge0TelemetryEditor';
 
 import { 
   LayoutDashboard, 
@@ -375,6 +376,15 @@ export default function App() {
             </button>
 
             <button
+              onClick={() => navigate('/sandbox')}
+              className={`nav-link ${activeTab === 'sandbox' ? 'active' : ''}`}
+              style={{ background: 'none', border: 'none', width: '100%', textTransform: 'none', fontFamily: 'inherit', textAlign: 'left' }}
+            >
+              <Code size={18} style={{ flexShrink: 0 }} />
+              <span className="nav-text">Coding Sandbox</span>
+            </button>
+
+            <button
               onClick={() => navigate('/mesh')}
               className={`nav-link ${activeTab === 'mesh' ? 'active' : ''}`}
               style={{ background: 'none', border: 'none', width: '100%', textTransform: 'none', fontFamily: 'inherit', textAlign: 'left' }}
@@ -494,6 +504,7 @@ export default function App() {
       <Route path="/history" element={renderPrivateRoute(<HistoryScreen user={user} />)} />
       <Route path="/profile" element={renderPrivateRoute(<ProfileScreen user={user} onLogout={handleLogout} />)} />
       <Route path="/logs" element={renderPrivateRoute(<DebugConsoleScreen />)} />
+      <Route path="/sandbox" element={renderPrivateRoute(<Judge0TelemetryEditor user={user} />)} />
 
       {/* Wildcard Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />
