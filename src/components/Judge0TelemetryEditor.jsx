@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../services/api';
 import Editor from '@monaco-editor/react';
-import { Code, Terminal, Play, CheckCircle, ShieldAlert, Cpu, Timer, Clipboard, Delete } from 'lucide-react';
+import { Code, Terminal, Play, CheckCircle, ShieldAlert, Cpu, Timer, Clipboard, Delete, BrainCircuit } from 'lucide-react';
 import GemmaAgentHUD from './GemmaAgentHUD';
 
 const STARTER_SNIPPETS = {
