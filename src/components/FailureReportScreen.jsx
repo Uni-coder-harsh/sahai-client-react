@@ -91,16 +91,32 @@ export default function FailureReportScreen({ user }) {
                 </h3>
 
                 {/* Performance comparisons */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', paddingLeft: '28px', marginBottom: '20px' }}>
-                  <div style={{ display: 'flex', gap: '8px', fontSize: '0.9rem', color: 'var(--error)' }}>
-                    <X size={16} style={{ flexShrink: 0, marginTop: '2px' }} />
-                    <span><strong>Your Answer:</strong> Option {fail.chosen_option_letter}) {fail.chosen_option_text}</span>
+                {fail.type !== 'handwriting' ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', paddingLeft: '28px', marginBottom: '20px' }}>
+                    <div style={{ display: 'flex', gap: '8px', fontSize: '0.9rem', color: 'var(--error)' }}>
+                      <X size={16} style={{ flexShrink: 0, marginTop: '2px' }} />
+                      <span><strong>Your Answer:</strong> Option {fail.chosen_option_letter}) {fail.chosen_option_text}</span>
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px', fontSize: '0.9rem', color: 'var(--success)' }}>
+                      <CornerDownRight size={16} style={{ flexShrink: 0, marginTop: '2px' }} />
+                      <span><strong>Correct Solution:</strong> Option {fail.correct_option_letter}) {fail.correct_option_text}</span>
+                    </div>
                   </div>
-                  <div style={{ display: 'flex', gap: '8px', fontSize: '0.9rem', color: 'var(--success)' }}>
-                    <CornerDownRight size={16} style={{ flexShrink: 0, marginTop: '2px' }} />
-                    <span><strong>Correct Solution:</strong> Option {fail.correct_option_letter}) {fail.correct_option_text}</span>
+                ) : (
+                  <div style={{ paddingLeft: '28px', marginBottom: '16px', fontSize: '0.9rem', color: 'var(--error)' }}>
+                    <span><strong>Status:</strong> Evaluated logical flaw during handwritten code compilation.</span>
                   </div>
-                </div>
+                )}
+
+                {/* Handwriting specific details */}
+                {fail.type === 'handwriting' && fail.ocr_extracted_text && (
+                  <div style={{ marginLeft: '28px', marginBottom: '16px' }}>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}><strong>Extracted Code Scan:</strong></span>
+                    <pre style={{ margin: '4px 0 0 0', padding: '12px', background: '#04060b', border: '1px solid var(--border-color)', borderRadius: '8px', color: '#00f2fe', fontFamily: 'monospace', fontSize: '0.8rem', overflowX: 'auto', whiteSpace: 'pre-wrap' }}>
+                      {fail.ocr_extracted_text}
+                    </pre>
+                  </div>
+                )}
 
                 {/* Misconceptions audit details */}
                 {fail.misconceptions && fail.misconceptions.length > 0 && (
@@ -122,9 +138,11 @@ export default function FailureReportScreen({ user }) {
                 <div style={{ marginLeft: '28px', padding: '16px', background: 'rgba(20, 184, 166, 0.03)', borderRadius: '12px', border: '1px solid rgba(20, 184, 166, 0.15)', display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
                   <Lightbulb size={18} style={{ color: 'var(--accent)', flexShrink: 0, marginTop: '2px' }} />
                   <div>
-                    <h5 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', marginBottom: '4px' }}>Remedial Tip</h5>
+                    <h5 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', marginBottom: '4px' }}>Remedial Tip (Gemma 4 Tutor Feedback)</h5>
                     <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                      {fail.misconceptions && fail.misconceptions.length > 0
+                      {fail.type === 'handwriting' && fail.llm_logical_flaw
+                        ? fail.llm_logical_flaw
+                        : fail.misconceptions && fail.misconceptions.length > 0
                         ? getRemedialTip(fail.misconceptions[0])
                         : getRemedialTip('')}
                     </p>
