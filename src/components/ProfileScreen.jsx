@@ -219,6 +219,67 @@ export default function ProfileScreen({ user, onLogout }) {
           <span>Profile configuration updated and Redis caches synchronized successfully!</span>
         </div>
       )}
+      {/* VS Code Extension Token Integration Section */}
+      <div className="glass-card" style={{ 
+        background: 'rgba(13, 21, 39, 0.65)', 
+        border: '1px solid rgba(0, 242, 254, 0.25)', 
+        padding: '24px', 
+        borderRadius: '16px', 
+        marginBottom: '32px',
+        boxShadow: '0 8px 32px rgba(0, 242, 254, 0.05)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '12px'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ background: 'rgba(0, 242, 254, 0.1)', padding: '8px', borderRadius: '8px' }}>
+            <span style={{ fontSize: '1.2rem' }}>🔌</span>
+          </div>
+          <div>
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#00f2fe', margin: 0 }}>VS Code Extension Token</h3>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
+              Paste this token into the <strong>SahAI Lens</strong> extension inside VS Code to securely sync DSA telemetry.
+            </p>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
+          <input 
+            type="text" 
+            readOnly 
+            value={user?.id || "sahai_usr_demo123"} 
+            style={{ 
+              background: '#04060b', 
+              color: '#00f2fe', 
+              fontFamily: 'monospace', 
+              fontSize: '0.85rem', 
+              padding: '12px 16px', 
+              borderRadius: '8px', 
+              flex: 1, 
+              border: '1px solid rgba(0, 242, 254, 0.15)',
+              outline: 'none'
+            }}
+          />
+          <button 
+            type="button"
+            onClick={() => {
+              navigator.clipboard.writeText(user?.id);
+              alert('Extension API Token copied to clipboard!');
+            }}
+            className="btn btn-primary"
+            style={{ 
+              height: '44px',
+              padding: '0 20px',
+              background: 'linear-gradient(135deg, #00f2fe, #14b8a6)',
+              color: '#070a13',
+              fontWeight: 800,
+              border: 'none'
+            }}
+          >
+            Copy Token
+          </button>
+        </div>
+      </div>
 
       {/* Main Profile Layout */}
       <form onSubmit={handleUpdateProfile}>
